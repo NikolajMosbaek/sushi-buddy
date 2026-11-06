@@ -40,6 +40,24 @@ jobs:
             -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview.png", '--at', '0.9,3,5.9'
           Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png" -ErrorAction Stop
 
+      - name: Start with Windows turns on and off
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe").Path
+          $run = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+          function Entries { (Get-ItemProperty $run -ErrorAction SilentlyContinue).PSObject.Properties |
+            Where-Object { "$($_.Value)" -like "*Sushi Buddy.exe*" } }
+
+          Start-Process -Wait -FilePath $exe -ArgumentList '--launch-at-login', 'on'
+          $on = @(Entries)
+          $on | Format-List Name, Value
+          if ($on.Count -ne 1) { throw "expected one Run entry for Sushi Buddy, found $($on.Count)" }
+
+          Start-Process -Wait -FilePath $exe -ArgumentList '--launch-at-login', 'off'
+          $off = @(Entries)
+          if ($off.Count -ne 0) { throw "the Run entry is still there after off" }
+          'on and off both took'
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-preview

@@ -14,6 +14,7 @@ struct SushiBuddyApp: App {
                     Text(preset.label).tag(preset.seconds)
                 }
             }
+            Toggle("Launch at Login", isOn: launchAtLoginSelection)
             Divider()
             if let update = appDelegate.updates.available {
                 Button("Update to \(update.version?.description ?? update.tagName)…") {
@@ -38,12 +39,20 @@ struct SushiBuddyApp: App {
             set: { appDelegate.autoMotivate.set($0) }
         )
     }
+
+    private var launchAtLoginSelection: Binding<Bool> {
+        Binding(
+            get: { appDelegate.launchAtLogin.isEnabled },
+            set: { appDelegate.launchAtLogin.set($0) }
+        )
+    }
 }
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let flights = FlightController()
     let updates = Updates()
+    let launchAtLogin = LaunchAtLogin()
     lazy var autoMotivate = AutoMotivate { [flights] in flights.launch() }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -61,6 +70,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 print("Focus access: \(access.rawValue) (3 = allowed), Focus on: \(FocusStatus.isFocused)")
                 NSApp.terminate(nil)
             }
+            return
+        }
+        // --launch-at-login on|off|status: for setting it up from a script.
+        if let flag = arguments.firstIndex(of: "--launch-at-login") {
+            let choice = arguments.indices.contains(flag + 1) ? arguments[flag + 1] : "status"
+            if choice == "on" || choice == "off" { launchAtLogin.set(choice == "on") }
+            print("Launch at Login: \(launchAtLogin.status)")
+            NSApp.terminate(nil)
             return
         }
         if arguments.contains("--check-updates") {

@@ -9,6 +9,7 @@ it never gets in the way.
 | Folder | `mac/` (Swift, SwiftUI + AppKit) | `windows/` (Electron) |
 | Trigger | menu bar icon → Motivate me | tray icon: left click, or right click → Motivate me |
 | On a timer | menu bar icon → Auto-motivate | tray icon → Auto-motivate |
+| At login | menu bar icon → Launch at Login | tray icon → Start with Windows |
 | Build | `mac/scripts/build-app.sh` (Xcode) | `cd windows && npm install && npm run package` |
 | Output | `~/Applications/Sushi Buddy.app` | `windows/dist/Sushi-Buddy-windows-{x64,arm64}.zip` |
 
@@ -48,6 +49,9 @@ the tray icon is the sushi either way.
   shortcut with it works as a trigger.
 - `--preview <file.png>`: render moments of a flight without showing anything (Windows build:
   `--at 0.9,3,5.9` picks the seconds).
+- `--launch-at-login on|off`: set it from a script (macOS also takes `status`). On Windows it is the
+  `Run` registry entry for the exe where it is now, so turn it on again after moving the folder.
+- `--focus-status`, `--check-updates`: say what the app sees.
 
 ## Art
 

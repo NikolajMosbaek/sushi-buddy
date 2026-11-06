@@ -158,6 +158,15 @@ function refreshMenu() {
           },
         })),
       },
+      {
+        label: process.platform === 'win32' ? 'Start with Windows' : 'Launch at Login',
+        type: 'checkbox',
+        checked: app.getLoginItemSettings().openAtLogin,
+        click: item => {
+          app.setLoginItemSettings({ openAtLogin: item.checked })
+          refreshMenu()
+        },
+      },
       { type: 'separator' },
       update,
       { type: 'separator' },
@@ -222,6 +231,14 @@ if (!app.requestSingleInstanceLock()) {
         if (process.platform === 'win32') await dialog.showMessageBox({ title: 'Sushi Buddy', message: text })
         app.quit()
       })
+    }
+    // --launch-at-login on|off: for setting it up from a script (on Windows: the Run registry key).
+    const launchAtLogin = argument('--launch-at-login')
+    if (launchAtLogin === 'on' || launchAtLogin === 'off') {
+      app.setLoginItemSettings({ openAtLogin: launchAtLogin === 'on' })
+      console.log(`Launch at Login: ${app.getLoginItemSettings().openAtLogin ? 'on' : 'off'}`)
+      app.quit()
+      return
     }
     if (process.argv.includes('--check-updates')) {
       return checkForUpdate(app.getVersion()).then(result => {
