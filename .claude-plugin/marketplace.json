@@ -1,0 +1,11 @@
+{
+  "name": "sushi-buddy",
+  "owner": { "name": "Nikolaj Søgaard Simonsen" },
+  "plugins": [
+    {
+      "name": "sushi-buddy",
+      "source": "./claude-code",
+      "description": "Lets the Sushi Buddy app cheer when Claude finishes a long turn and fly when Claude needs your permission."
+    }
+  ]
+}

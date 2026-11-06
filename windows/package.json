@@ -1,7 +1,7 @@
 {
   "name": "sushi-buddy",
   "productName": "Sushi Buddy",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A sushi in a propeller hat that flies across your screen to cheer you on.",
   "private": true,
   "main": "main.js",

@@ -1,0 +1,105 @@
+name: Release
+
+# Builds every download on its own platform and, for a pushed tag (v1.4.0), publishes them
+# as that tag's GitHub release, with the asset names the apps' update checks look for.
+# Run it by hand (Actions → Release → Run workflow) for a dry run: it builds and uploads the
+# zips and the winget manifests as workflow artifacts and publishes nothing.
+#
+# Signing: when the Developer ID secrets below are set, the Mac app is signed and notarized,
+# so Gatekeeper opens it without a warning. Without them it is ad-hoc signed, as before.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-15
+    env:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests
+        working-directory: mac
+        run: swift test
+      - name: Build the app
+        run: mac/scripts/build-app.sh --bundle-only
+      - name: Sign with Developer ID and notarize
+        if: env.APPLE_CERTIFICATE != ''
+        run: mac/scripts/sign-and-notarize.sh "mac/build/Sushi Buddy.app"
+      - name: Zip
+        run: ditto -c -k --keepParent "mac/build/Sushi Buddy.app" Sushi-Buddy-macOS-arm64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: Sushi-Buddy-macOS-arm64.zip
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+      - name: Package (with the sushi icon and the app's name on the exe)
+        shell: bash
+        run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: windows/dist/Sushi-Buddy-windows-*.zip
+
+  winget:
+    needs: windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: zips
+      - name: Write the manifests for this version
+        run: node packaging/winget/manifests.js "$(node -p "require('./windows/package.json').version")" zips winget
+      - uses: actions/upload-artifact@v4
+        with:
+          name: winget-manifests
+          path: winget
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [mac, windows, winget]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Check the tag matches the apps' versions
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          windows=$(node -p "require('./windows/package.json').version")
+          mac=$(/usr/bin/sed -n '/CFBundleShortVersionString/{n;s/.*<string>\(.*\)<\/string>.*/\1/p;}' mac/Info.plist)
+          echo "tag $tag, Windows $windows, Mac $mac"
+          [[ "$tag" == "$windows" && "$tag" == "$mac"* ]]
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          (cd artifacts/winget && zip -qr ../../winget-manifests.zip .)
+          gh release create "$GITHUB_REF_NAME" --title "Sushi Buddy ${GITHUB_REF_NAME#v}" --generate-notes \
+            artifacts/mac/Sushi-Buddy-macOS-arm64.zip \
+            artifacts/windows/Sushi-Buddy-windows-x64.zip \
+            artifacts/windows/Sushi-Buddy-windows-arm64.zip \
+            winget-manifests.zip

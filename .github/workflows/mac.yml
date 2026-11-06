@@ -1,0 +1,32 @@
+name: macOS
+
+# Proves the Mac build on a clean Mac: the tests pass, the app bundles, and a flight and
+# the Settings window render. The rendered images are uploaded to look at.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests
+        working-directory: mac
+        run: swift test
+      - name: Build the app
+        run: mac/scripts/build-app.sh --bundle-only
+      - name: Render a flight and Settings
+        run: |
+          app="mac/build/Sushi Buddy.app/Contents/MacOS/SushiBuddy"
+          "$app" --preview "$GITHUB_WORKSPACE/preview-mac.png" --path loop
+          mkdir -p "$GITHUB_WORKSPACE/settings-mac"
+          "$app" --preview-settings "$GITHUB_WORKSPACE/settings-mac"
+          ls -l "$GITHUB_WORKSPACE/preview-mac.png" "$GITHUB_WORKSPACE"/settings-mac/*.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-preview
+          path: |
+            preview-mac.png
+            settings-mac/*.png

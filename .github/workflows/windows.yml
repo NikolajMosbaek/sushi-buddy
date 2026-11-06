@@ -1,7 +1,9 @@
 name: Windows
 
-# Proves the Windows build on Windows itself: the Focus check runs, the app
-# packages, and a flight renders. The rendered frames are uploaded to look at.
+# Proves the Windows build on Windows itself: the system check reads Do not disturb,
+# presenting and the microphone, the app packages with its own icon, flights and the
+# Settings page render, the listener answers, and Start with Windows takes. The
+# rendered frames are uploaded to look at.
 on:
   push:
     branches: [main]
@@ -22,23 +24,50 @@ jobs:
       - run: npm test
       - run: npm run assets
 
-      - name: Focus check reads Do not disturb
+      - name: System check reads Do not disturb, presenting and calls
         run: >
-          node -e "require('./focus').focusProfile().then(p => { console.log('quiet-hours profile:', p);
-          if (p === null) process.exit(1) })"
+          node -e "require('./system').readSystem().then(s => { console.log(s);
+          if (s.focusProfile === null || s.notificationState === null || s.microphone === null) process.exit(1) })"
 
       - name: Package
         shell: bash
-        run: >
-          npx electron-packager . "Sushi Buddy" --platform=win32 --arch=x64 --out=dist --asar --overwrite
-          --ignore='^/(dist|scripts|node_modules|test)(/|$)' --ignore='^/(sync-assets\.js|\.gitignore)$'
+        run: npm run package
 
-      - name: Render a flight
+      - name: The exe carries the app's name
         shell: pwsh
         run: |
-          Start-Process -Wait -FilePath "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe" `
-            -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview.png", '--at', '0.9,3,5.9'
-          Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png" -ErrorAction Stop
+          $info = (Get-Item "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe").VersionInfo
+          $info | Format-List ProductName, FileDescription, ProductVersion
+          if ($info.ProductName -ne 'Sushi Buddy') { throw "ProductName is '$($info.ProductName)'" }
+
+      - name: Render flights and Settings
+        shell: pwsh
+        run: |
+          $exe = "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe"
+          Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview.png", '--at', '0.9,3,5.9'
+          Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-loop.png", '--path', 'loop', '--at', '0.9'
+          Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-pet.png", '--at', '2.5', '--pets', '2.2'
+          Start-Process -Wait -FilePath $exe -ArgumentList '--preview-settings', "$env:GITHUB_WORKSPACE"
+          Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png", "$env:GITHUB_WORKSPACE\settings.png" -ErrorAction Stop
+
+      - name: The listener answers on 127.0.0.1
+        shell: pwsh
+        run: |
+          $app = Start-Process -PassThru -FilePath "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe"
+          try {
+            Start-Sleep -Seconds 8
+            $hello = curl.exe -s http://127.0.0.1:7874/
+            "GET / -> $hello"
+            if ($hello -notmatch 'Sushi Buddy') { throw "no answer from the listener" }
+            $fly = curl.exe -s -o NUL -w '%{http_code}' -d 'Hello from CI' http://127.0.0.1:7874/fly
+            $origin = curl.exe -s -o NUL -w '%{http_code}' -H 'Origin: https://example.com' -d 'x' http://127.0.0.1:7874/fly
+            $claude = '{"hook_event_name":"Stop","session_id":"ci"}' | curl.exe -s -o NUL -w '%{http_code}' --data-binary '@-' http://127.0.0.1:7874/claude
+            "POST /fly -> $fly, with an Origin -> $origin, POST /claude -> $claude"
+            if ($fly -ne '204' -or $origin -ne '403' -or $claude -ne '204') { throw "unexpected status" }
+          } finally {
+            Stop-Process -Id $app.Id -Force -ErrorAction SilentlyContinue
+            Get-Process 'Sushi Buddy' -ErrorAction SilentlyContinue | Stop-Process -Force
+          }
 
       - name: Start with Windows turns on and off
         shell: pwsh
@@ -61,4 +90,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: windows-preview
-          path: preview-*.png
+          path: |
+            preview-*.png
+            settings.png

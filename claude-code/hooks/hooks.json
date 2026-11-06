@@ -1,0 +1,69 @@
+{
+  "description": "Posts Claude Code's prompt, stop and permission events to Sushi Buddy on 127.0.0.1:7874. Nothing leaves this computer; when Sushi Buddy isn't running, curl fails quietly in the background.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl",
+            "args": [
+              "-s",
+              "-m",
+              "2",
+              "--data-binary",
+              "@-",
+              "-H",
+              "Content-Type: application/json",
+              "http://127.0.0.1:7874/claude"
+            ],
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl",
+            "args": [
+              "-s",
+              "-m",
+              "2",
+              "--data-binary",
+              "@-",
+              "-H",
+              "Content-Type: application/json",
+              "http://127.0.0.1:7874/claude"
+            ],
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl",
+            "args": [
+              "-s",
+              "-m",
+              "2",
+              "--data-binary",
+              "@-",
+              "-H",
+              "Content-Type: application/json",
+              "http://127.0.0.1:7874/claude"
+            ],
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

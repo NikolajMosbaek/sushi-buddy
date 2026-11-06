@@ -1,0 +1,9 @@
+{
+  "name": "sushi-buddy",
+  "version": "1.4.0",
+  "description": "Lets the Sushi Buddy app cheer when Claude finishes a long turn and fly when Claude needs your permission.",
+  "author": {
+    "name": "Nikolaj Søgaard Simonsen"
+  },
+  "homepage": "https://github.com/NikolajMosbaek/sushi-buddy"
+}
