@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, nativeImage, screen } = require('electron')
+const { app, BrowserWindow, Menu, Tray, dialog, nativeImage, screen } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 
@@ -160,9 +160,13 @@ if (!app.requestSingleInstanceLock()) {
   app.on('window-all-closed', () => {})
 
   app.whenReady().then(() => {
+    // A GUI .exe has no console to print to, so on Windows the answer is a dialog.
     if (process.argv.includes('--focus-status')) {
-      return focusProfile().then(profile => {
-        console.log(`Focus profile: ${profile ?? 'unreadable'} (0 = off)`)
+      return focusProfile().then(async profile => {
+        const state = profile === null ? 'unreadable' : profile === 0 ? 'off' : 'on'
+        const text = `Do not disturb / Focus assist: ${state} (profile ${profile ?? '-'}; 0 = off).`
+        console.log(text)
+        if (process.platform === 'win32') await dialog.showMessageBox({ title: 'Sushi Buddy', message: text })
         app.quit()
       })
     }
