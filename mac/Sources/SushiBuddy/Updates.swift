@@ -71,7 +71,7 @@ enum UpdateOutcome: Equatable, Sendable {
     }
 }
 
-/// Checks GitHub for a newer release: quietly at launch and once a day, where a find
+/// Checks GitHub for a newer release: quietly at launch and once a day (unless switched off in Settings), where a find
 /// turns the menu's item into "Update to …", and on demand from the menu, which says
 /// what it found. The download opens in the browser; nothing installs by itself.
 @MainActor
@@ -79,8 +79,10 @@ enum UpdateOutcome: Equatable, Sendable {
 final class Updates {
     static let repository = "NikolajMosbaek/sushi-buddy"
 
+    static let installedVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+
     private(set) var available: Release?
-    let current = Version(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
+    let current = Version(installedVersion)
 
     @ObservationIgnored private var quietChecks: Task<Void, Never>?
 
@@ -106,6 +108,11 @@ final class Updates {
                 try? await Task.sleep(for: .seconds(24 * 60 * 60))
             }
         }
+    }
+
+    func stopQuietChecks() {
+        quietChecks?.cancel()
+        quietChecks = nil
     }
 
     func checkAndTell() async {

@@ -1,0 +1,72 @@
+{
+  "anytime": [
+    "You're on a roll! 🍣",
+    "Soy proud of you!",
+    "Don't be koi, you've got this!",
+    "You're nigiri-ght on track!",
+    "Rice and shine, superstar!",
+    "Raw talent, right here.",
+    "Wasabi? Keep going!",
+    "Ship it! 🚀",
+    "One bug at a time.",
+    "Small steps still count.",
+    "Future you says thanks.",
+    "Tiny progress is still progress.",
+    "Sip some water 💧",
+    "Roll those shoulders back!",
+    "You make this look easy.",
+    "Deep breath. You've got it."
+  ],
+  "morning": [
+    "Good morning! ☀️",
+    "Rice and shine! 🍣",
+    "Coffee first, then conquer ☕",
+    "Fresh day, fresh rice!"
+  ],
+  "lateNight": [
+    "It's late. Time to roll into bed? 🌙",
+    "Sleep is a feature, not a bug 😴",
+    "Save your work and get some rest!"
+  ],
+  "monday": [
+    "New week, new rolls! 💪",
+    "Monday? You've got this."
+  ],
+  "friday": [
+    "It's Friday! 🎉",
+    "Almost weekend. Finish strong!"
+  ],
+  "streak": [
+    "Day {days} in a row! 🔥",
+    "{days} days straight. Unstoppable! 🍣"
+  ],
+  "welcomeBack": [
+    "Welcome back! 👋",
+    "Missed you! Ready to roll?",
+    "Look who's back! 🍣"
+  ],
+  "break": [
+    "Time to stand up and stretch 🧘",
+    "Drink some water 💧",
+    "Rest your eyes: look far away for 20 seconds 👀",
+    "Take a little walk 🚶"
+  ],
+  "claudeDone": [
+    "Claude's done in {project}! 🍣",
+    "{project}: task complete ✅",
+    "Claude finished {project}. Your turn!"
+  ],
+  "claudeNeedsYou": [
+    "Claude needs you in {project}! 🙋",
+    "{project}: Claude is waiting for your OK",
+    "Permission, please? 🙏 ({project})"
+  ],
+  "pomodoroDone": [
+    "Pomodoro done! Take a break 🍅",
+    "Great focus! Break time ☕"
+  ],
+  "pomodoroBreakOver": [
+    "Break's over, back at it! 💪",
+    "Ready for another round? 🍅"
+  ]
+}

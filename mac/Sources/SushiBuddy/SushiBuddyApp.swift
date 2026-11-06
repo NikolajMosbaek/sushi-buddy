@@ -4,18 +4,18 @@ import SwiftUI
 @main
 struct SushiBuddyApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @AppStorage(AutoMotivate.defaultsKey) private var autoMotivateSeconds = 0
 
     var body: some Scene {
         MenuBarExtra {
-            Button("Motivate me") { appDelegate.flights.launch() }
-            Picker("Auto-motivate", selection: autoMotivateSelection) {
-                ForEach(AutoMotivate.presets, id: \.seconds) { preset in
-                    Text(preset.label).tag(preset.seconds)
-                }
+            Button("Motivate me") { appDelegate.sushi.fly("motivate") }
+            if let pomodoro = appDelegate.sushi.pomodoro {
+                Button("Stop Pomodoro (\(pomodoro.describe(at: .now)))") { appDelegate.sushi.stopPomodoro() }
+            } else {
+                Button("Start Pomodoro") { appDelegate.sushi.startPomodoro() }
             }
-            Toggle("Launch at Login", isOn: launchAtLoginSelection)
             Divider()
+            Button("Settings…") { appDelegate.showSettings() }
+                .keyboardShortcut(",")
             if let update = appDelegate.updates.available {
                 Button("Update to \(update.version?.description ?? update.tagName)…") {
                     appDelegate.updates.download(update)
@@ -32,49 +32,54 @@ struct SushiBuddyApp: App {
             Image(nsImage: Artwork.menuBarIcon)
         }
     }
-
-    private var autoMotivateSelection: Binding<Int> {
-        Binding(
-            get: { autoMotivateSeconds },
-            set: { appDelegate.autoMotivate.set($0) }
-        )
-    }
-
-    private var launchAtLoginSelection: Binding<Bool> {
-        Binding(
-            get: { appDelegate.launchAtLogin.isEnabled },
-            set: { appDelegate.launchAtLogin.set($0) }
-        )
-    }
 }
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    let flights = FlightController()
+    let preferences = Preferences()
     let updates = Updates()
     let launchAtLogin = LaunchAtLogin()
-    lazy var autoMotivate = AutoMotivate { [flights] in flights.launch() }
+    lazy var sushi = Sushi(preferences: preferences, updates: updates)
+    private let settingsWindow = SettingsWindow()
+
+    func showSettings() {
+        settingsWindow.show(sushi: sushi, launchAtLogin: launchAtLogin)
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         let arguments = CommandLine.arguments
-        if let flag = arguments.firstIndex(of: "--preview"), arguments.indices.contains(flag + 1) {
-            PreviewSheet.write(to: URL(fileURLWithPath: arguments[flag + 1]))
+        func value(after flag: String) -> String? {
+            guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else { return nil }
+            return arguments[index + 1]
+        }
+
+        // --preview <file.png> [--path loop]: draws a flight to a PNG and quits.
+        if let file = value(after: "--preview") {
+            PreviewSheet.write(to: URL(fileURLWithPath: file), path: FlightPath(rawValue: value(after: "--path") ?? "") ?? .classic)
             NSApp.terminate(nil)
             return
         }
-        if arguments.contains("--focus-status") {
+        if let folder = value(after: "--preview-settings") {
             Task {
-                let access = await FocusStatus.requestAccess()
-                print("Focus access: \(access.rawValue) (3 = allowed), Focus on: \(FocusStatus.isFocused)")
+                await SettingsWindow.writePreviews(to: URL(fileURLWithPath: folder), sushi: sushi, launchAtLogin: launchAtLogin)
+                NSApp.terminate(nil)
+            }
+            return
+        }
+        // --status: what the quiet rules see right now.
+        if arguments.contains("--status") {
+            Task {
+                _ = await FocusStatus.requestAccess()
+                for line in SystemSignals.describe(awayMinutes: preferences.settings.awayMinutes) { print(line) }
                 NSApp.terminate(nil)
             }
             return
         }
         // --launch-at-login on|off|status: for setting it up from a script.
-        if let flag = arguments.firstIndex(of: "--launch-at-login") {
-            let choice = arguments.indices.contains(flag + 1) ? arguments[flag + 1] : "status"
+        if arguments.contains("--launch-at-login") {
+            let choice = value(after: "--launch-at-login") ?? "status"
             if choice == "on" || choice == "off" { launchAtLogin.set(choice == "on") }
             print("Launch at Login: \(launchAtLogin.status)")
             NSApp.terminate(nil)
@@ -87,10 +92,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return
         }
-        autoMotivate.start()
-        updates.startQuietChecks()
-        if arguments.contains("--fly") {
-            flights.launch()
-        }
+        sushi.start()
+        if arguments.contains("--fly") { sushi.fly("motivate") }
+        if arguments.contains("--settings") { showSettings() }
     }
 }
