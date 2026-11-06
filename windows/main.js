@@ -3,6 +3,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { DURATION, previewFlight, randomFlight } = require('./flight')
+const { focusProfile, isFocused } = require('./focus')
 
 const ASSETS = path.join(__dirname, 'assets')
 const OVERLAY = path.join(__dirname, 'overlay.html')
@@ -78,10 +79,16 @@ function autoMotivateSeconds() {
 }
 
 // (Re)starts the countdown from now, so a change takes effect at once.
+// A turn that comes round during a Focus is skipped, not saved for later.
 function startAutoMotivate() {
   clearInterval(autoMotivateTimer)
   const seconds = autoMotivateSeconds()
-  autoMotivateTimer = seconds > 0 ? setInterval(fly, seconds * 1000) : undefined
+  autoMotivateTimer =
+    seconds > 0
+      ? setInterval(async () => {
+          if (!(await isFocused())) fly()
+        }, seconds * 1000)
+      : undefined
 }
 
 function setAutoMotivate(seconds) {
@@ -153,6 +160,12 @@ if (!app.requestSingleInstanceLock()) {
   app.on('window-all-closed', () => {})
 
   app.whenReady().then(() => {
+    if (process.argv.includes('--focus-status')) {
+      return focusProfile().then(profile => {
+        console.log(`Focus profile: ${profile ?? 'unreadable'} (0 = off)`)
+        app.quit()
+      })
+    }
     const previewFile = argument('--preview')
     if (previewFile) {
       const moments = (argument('--at') ?? '0.9,3,5.9').split(',').map(Number)

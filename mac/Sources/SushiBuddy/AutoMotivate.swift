@@ -32,6 +32,7 @@ final class AutoMotivate {
     }
 
     /// (Re)starts the countdown from now, so a change takes effect at once.
+    /// A turn that comes round during a Focus is skipped, not saved for later.
     func start() {
         timer?.cancel()
         let interval = seconds
@@ -40,10 +41,13 @@ final class AutoMotivate {
             return
         }
         timer = Task { [fly] in
+            if FocusStatus.authorization == .notDetermined {
+                _ = await FocusStatus.requestAccess()
+            }
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(interval))
                 if Task.isCancelled { return }
-                fly()
+                if !FocusStatus.isFocused { fly() }
             }
         }
     }

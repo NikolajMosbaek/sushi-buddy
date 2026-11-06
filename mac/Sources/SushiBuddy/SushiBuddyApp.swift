@@ -44,6 +44,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        if arguments.contains("--focus-status") {
+            Task {
+                let access = await FocusStatus.requestAccess()
+                print("Focus access: \(access.rawValue) (3 = allowed), Focus on: \(FocusStatus.isFocused)")
+                NSApp.terminate(nil)
+            }
+            return
+        }
         autoMotivate.start()
         if arguments.contains("--fly") {
             flights.launch()

@@ -16,6 +16,11 @@ it never gets in the way.
 from when you pick it (and from each launch). The choice is kept: in the app's defaults on macOS
 (`autoMotivateSeconds`), in `%APPDATA%\Sushi Buddy\settings.json` on Windows.
 
+**Focus is respected:** while a macOS Focus (Do Not Disturb, Work, …) or Windows Do not disturb /
+Focus assist is on, Auto-motivate skips its turn. **Motivate me** still flies, since you asked. On
+macOS the first time Auto-motivate is switched on, the app asks to see your Focus status; if that is
+declined it cannot tell, and flies as usual. Both apps answer `--focus-status` with what they see.
+
 Both apps share `Resources/`: the art layers and `motivation.json`, the lines the sushi says.
 `windows/flight.js` is a line-for-line port of `mac/Sources/SushiBuddy/Flight.swift`, so both fly the
 same path; change one, change the other.

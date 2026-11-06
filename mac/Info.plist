@@ -24,5 +24,7 @@
 	<string>14.0</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSFocusStatusUsageDescription</key>
+	<string>Sushi Buddy stays quiet while a Focus is on, so Auto-motivate never interrupts you.</string>
 </dict>
 </plist>

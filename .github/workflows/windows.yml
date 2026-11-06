@@ -1,0 +1,45 @@
+name: Windows
+
+# Proves the Windows build on Windows itself: the Focus check runs, the app
+# packages, and a flight renders. The rendered frames are uploaded to look at.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run assets
+
+      - name: Focus check reads Do not disturb
+        run: >
+          node -e "require('./focus').focusProfile().then(p => { console.log('quiet-hours profile:', p);
+          if (p === null) process.exit(1) })"
+
+      - name: Package
+        shell: bash
+        run: >
+          npx electron-packager . "Sushi Buddy" --platform=win32 --arch=x64 --out=dist --asar --overwrite
+          --ignore='^/(dist|scripts|node_modules)(/|$)' --ignore='^/(sync-assets\.js|\.gitignore)$'
+
+      - name: Render a flight
+        shell: pwsh
+        run: |
+          Start-Process -Wait -FilePath "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe" `
+            -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview.png", '--at', '0.9,3,5.9'
+          Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png" -ErrorAction Stop
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-preview
+          path: preview-*.png
