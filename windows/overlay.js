@@ -19,6 +19,10 @@ function draw(time) {
 
 window.addEventListener('load', () => {
   if (frozenAt !== null) {
+    // Hold the propeller at its angle for that second too, so frames line up into an animation.
+    const blades = document.getElementById('blades')
+    blades.style.animationDelay = `-${frozenAt}s`
+    blades.style.animationPlayState = 'paused'
     draw(frozenAt)
     return
   }

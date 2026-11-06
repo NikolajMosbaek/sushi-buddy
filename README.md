@@ -1,5 +1,7 @@
 # Sushi Buddy
 
+![The propeller-hat sushi flies in, says "You're on a roll!" and flies off](docs/sushi-buddy.gif)
+
 A tray / menu bar app: pick **Motivate me** and a sushi in a propeller hat flies across the screen
 your mouse is on, hovers to say something encouraging, and flies off. The overlay ignores clicks, so
 it never gets in the way.

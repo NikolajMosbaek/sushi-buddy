@@ -198,6 +198,9 @@ async function preview(file, moments) {
   for (const at of moments) {
     await window.loadFile(OVERLAY, { query: { flight: JSON.stringify(previewFlight(canvas)), at: String(at) } })
     await new Promise(resolve => setTimeout(resolve, 400))
+    // An offscreen page that looks the same as the last one paints nothing new,
+    // and capturePage would wait for that paint for ever: ask for one.
+    window.webContents.invalidate()
     const image = await window.webContents.capturePage()
     const out = file.replace(/\.png$/, '') + `-${at}s.png`
     fs.writeFileSync(out, image.toPNG())
