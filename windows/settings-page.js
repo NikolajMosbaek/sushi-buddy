@@ -99,4 +99,4 @@ async function refreshSignals() {
 api.onState(render)
 api.get().then(render)
 refreshSignals()
-setInterval(refreshSignals, 5000)
+setInterval(refreshSignals, 15000)
