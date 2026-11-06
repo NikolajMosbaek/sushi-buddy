@@ -8,7 +8,7 @@ cask "sushi-buddy" do
   homepage "https://github.com/NikolajMosbaek/sushi-buddy"
 
   depends_on arch: :arm64
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "Sushi Buddy.app"
 

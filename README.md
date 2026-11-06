@@ -23,6 +23,7 @@ while you're in a Focus, on a call, presenting or away.
 
 ```sh
 brew tap nikolajmosbaek/sushi-buddy https://github.com/NikolajMosbaek/sushi-buddy
+brew trust nikolajmosbaek/sushi-buddy   # Homebrew 7 and later only load taps you trust
 brew install --cask sushi-buddy
 ```
 
