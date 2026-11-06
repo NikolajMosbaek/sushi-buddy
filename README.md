@@ -8,8 +8,13 @@ it never gets in the way.
 |---|---|---|
 | Folder | `mac/` (Swift, SwiftUI + AppKit) | `windows/` (Electron) |
 | Trigger | menu bar icon → Motivate me | tray icon: left click, or right click → Motivate me |
+| On a timer | menu bar icon → Auto-motivate | tray icon → Auto-motivate |
 | Build | `mac/scripts/build-app.sh` (Xcode) | `cd windows && npm install && npm run package` |
 | Output | `~/Applications/Sushi Buddy.app` | `windows/dist/Sushi-Buddy-windows-{x64,arm64}.zip` |
+
+**Auto-motivate** flies on its own every 15 or 30 minutes, every hour, or every 2 or 4 hours, counted
+from when you pick it (and from each launch). The choice is kept: in the app's defaults on macOS
+(`autoMotivateSeconds`), in `%APPDATA%\Sushi Buddy\settings.json` on Windows.
 
 Both apps share `Resources/`: the art layers and `motivation.json`, the lines the sushi says.
 `windows/flight.js` is a line-for-line port of `mac/Sources/SushiBuddy/Flight.swift`, so both fly the

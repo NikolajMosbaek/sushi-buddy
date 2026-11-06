@@ -49,14 +49,65 @@ function fly() {
   overlay.loadFile(OVERLAY, { query: { flight: JSON.stringify(flight) } })
 }
 
+// The same presets as mac/Sources/SushiBuddy/AutoMotivate.swift, in seconds (0 = off).
+const AUTO_MOTIVATE_PRESETS = [
+  ['Off', 0],
+  ['Every 15 minutes', 15 * 60],
+  ['Every 30 minutes', 30 * 60],
+  ['Every hour', 60 * 60],
+  ['Every 2 hours', 2 * 60 * 60],
+  ['Every 4 hours', 4 * 60 * 60],
+]
+let autoMotivateTimer
+
+function settingsFile() {
+  return path.join(app.getPath('userData'), 'settings.json')
+}
+
+function readSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(settingsFile(), 'utf8'))
+  } catch {
+    return {}
+  }
+}
+
+function autoMotivateSeconds() {
+  const seconds = Number(readSettings().autoMotivateSeconds)
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : 0
+}
+
+// (Re)starts the countdown from now, so a change takes effect at once.
+function startAutoMotivate() {
+  clearInterval(autoMotivateTimer)
+  const seconds = autoMotivateSeconds()
+  autoMotivateTimer = seconds > 0 ? setInterval(fly, seconds * 1000) : undefined
+}
+
+function setAutoMotivate(seconds) {
+  fs.mkdirSync(app.getPath('userData'), { recursive: true })
+  fs.writeFileSync(settingsFile(), JSON.stringify({ ...readSettings(), autoMotivateSeconds: seconds }, null, 2))
+  startAutoMotivate()
+}
+
 function makeTray() {
   const icon = nativeImage.createFromPath(path.join(ASSETS, 'MenuBarIcon.png'))
   const side = process.platform === 'darwin' ? 18 : 32
   tray = new Tray(icon.resize({ width: side, height: side, quality: 'best' }))
   tray.setToolTip('Sushi Buddy')
+  const current = autoMotivateSeconds()
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: 'Motivate me', click: fly },
+      {
+        label: 'Auto-motivate',
+        submenu: AUTO_MOTIVATE_PRESETS.map(([label, seconds]) => ({
+          label,
+          type: 'radio',
+          checked: seconds === current,
+          click: () => setAutoMotivate(seconds),
+        })),
+      },
       { type: 'separator' },
       { label: 'Quit Sushi Buddy', role: 'quit' },
     ]),
@@ -109,6 +160,7 @@ if (!app.requestSingleInstanceLock()) {
     }
     if (process.platform === 'darwin') app.dock?.hide()
     makeTray()
+    startAutoMotivate()
     if (process.argv.includes('--fly')) fly()
   })
 }
