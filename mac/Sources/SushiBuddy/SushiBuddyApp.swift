@@ -15,6 +15,16 @@ struct SushiBuddyApp: App {
                 }
             }
             Divider()
+            if let update = appDelegate.updates.available {
+                Button("Update to \(update.version?.description ?? update.tagName)…") {
+                    appDelegate.updates.download(update)
+                }
+            } else {
+                Button("Check for Updates…") {
+                    Task { await appDelegate.updates.checkAndTell() }
+                }
+            }
+            Divider()
             Button("Quit Sushi Buddy") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
         } label: {
@@ -33,6 +43,7 @@ struct SushiBuddyApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let flights = FlightController()
+    let updates = Updates()
     lazy var autoMotivate = AutoMotivate { [flights] in flights.launch() }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -52,7 +63,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return
         }
+        if arguments.contains("--check-updates") {
+            Task {
+                print("Installed \(updates.current?.description ?? "?"): \(await updates.check())")
+                NSApp.terminate(nil)
+            }
+            return
+        }
         autoMotivate.start()
+        updates.startQuietChecks()
         if arguments.contains("--fly") {
             flights.launch()
         }

@@ -12,7 +12,7 @@ for arch in x64 arm64; do
   npx electron-packager . "Sushi Buddy" \
     --platform=win32 --arch="$arch" \
     --out=dist --asar --overwrite \
-    --ignore='^/(dist|scripts|node_modules)(/|$)' --ignore='^/(sync-assets\.js|\.gitignore)$'
+    --ignore='^/(dist|scripts|node_modules|test)(/|$)' --ignore='^/(sync-assets\.js|\.gitignore)$'
   # Every UI string is the app's own, so Chromium's other languages only add size.
   find "dist/Sushi Buddy-win32-$arch/locales" -name '*.pak' ! -name 'en-US.pak' -delete
   (cd dist && zip -qry -9 "Sushi-Buddy-windows-$arch.zip" "Sushi Buddy-win32-$arch")

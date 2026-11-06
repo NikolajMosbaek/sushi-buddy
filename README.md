@@ -21,6 +21,13 @@ Focus assist is on, Auto-motivate skips its turn. **Motivate me** still flies, s
 macOS the first time Auto-motivate is switched on, the app asks to see your Focus status; if that is
 declined it cannot tell, and flies as usual. Both apps answer `--focus-status` with what they see.
 
+**Updates:** both apps check this repo's latest GitHub release quietly at launch and once a day. When
+there is a newer one, the menu's **Check for Updates…** becomes **Update to 1.x…**, which opens the
+download for your machine in the browser; **Check for Updates…** itself says what it found. Nothing
+installs by itself: unzip the download over the old app. A release must keep the asset names
+(`Sushi-Buddy-macOS-arm64.zip`, `Sushi-Buddy-windows-{x64,arm64}.zip`) and a `v1.2.0`-style tag for the
+apps to find it. Tests: `cd mac && swift test`, `cd windows && npm test`.
+
 Both apps share `Resources/`: the art layers and `motivation.json`, the lines the sushi says.
 `windows/flight.js` is a line-for-line port of `mac/Sources/SushiBuddy/Flight.swift`, so both fly the
 same path; change one, change the other.

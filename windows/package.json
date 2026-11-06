@@ -1,7 +1,7 @@
 {
   "name": "sushi-buddy",
   "productName": "Sushi Buddy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A sushi in a propeller hat that flies across your screen to cheer you on.",
   "private": true,
   "main": "main.js",
@@ -9,7 +9,8 @@
     "assets": "node sync-assets.js",
     "start": "npm run assets && electron .",
     "fly": "npm run assets && electron . --fly",
-    "package": "npm run assets && bash scripts/package.sh"
+    "package": "npm run assets && bash scripts/package.sh",
+    "test": "node --test"
   },
   "devDependencies": {
     "@electron/packager": "20.3.0",

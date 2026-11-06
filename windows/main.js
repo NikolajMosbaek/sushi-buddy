@@ -1,9 +1,10 @@
-const { app, BrowserWindow, Menu, Tray, dialog, nativeImage, screen } = require('electron')
+const { app, BrowserWindow, Menu, Tray, dialog, nativeImage, screen, shell } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 
 const { DURATION, previewFlight, randomFlight } = require('./flight')
 const { focusProfile, isFocused } = require('./focus')
+const { check: checkForUpdate } = require('./update')
 
 const ASSETS = path.join(__dirname, 'assets')
 const OVERLAY = path.join(__dirname, 'overlay.html')
@@ -97,12 +98,51 @@ function setAutoMotivate(seconds) {
   startAutoMotivate()
 }
 
-function makeTray() {
-  const icon = nativeImage.createFromPath(path.join(ASSETS, 'MenuBarIcon.png'))
-  const side = process.platform === 'darwin' ? 18 : 32
-  tray = new Tray(icon.resize({ width: side, height: side, quality: 'best' }))
-  tray.setToolTip('Sushi Buddy')
+// A newer release found by the quiet checks: the menu then offers it in place of the check.
+let availableUpdate
+
+// Quietly at launch and once a day; nothing installs by itself.
+function startQuietUpdateChecks() {
+  const quietCheck = async () => {
+    const result = await checkForUpdate(app.getVersion())
+    if (result.status === 'failed') return
+    availableUpdate = result.status === 'available' ? result : undefined
+    refreshMenu()
+  }
+  quietCheck()
+  setInterval(quietCheck, 24 * 60 * 60 * 1000)
+}
+
+async function checkAndTell() {
+  const result = await checkForUpdate(app.getVersion())
+  availableUpdate = result.status === 'available' ? result : undefined
+  refreshMenu()
+  if (result.status === 'available') {
+    const { response } = await dialog.showMessageBox({
+      title: 'Sushi Buddy',
+      message: `Sushi Buddy ${result.latest} is available`,
+      detail: `You have ${app.getVersion()}. The download opens in your browser.`,
+      buttons: ['Download', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+    })
+    if (response === 0) shell.openExternal(result.url)
+  } else if (result.status === 'up-to-date') {
+    await dialog.showMessageBox({
+      title: 'Sushi Buddy',
+      message: 'Sushi Buddy is up to date',
+      detail: `${app.getVersion()} is the latest version.`,
+    })
+  } else {
+    await dialog.showMessageBox({ type: 'warning', title: 'Sushi Buddy', message: "Couldn't check for updates", detail: result.reason })
+  }
+}
+
+function refreshMenu() {
   const current = autoMotivateSeconds()
+  const update = availableUpdate
+    ? { label: `Update to ${availableUpdate.latest}…`, click: () => shell.openExternal(availableUpdate.url) }
+    : { label: 'Check for Updates…', click: checkAndTell }
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: 'Motivate me', click: fly },
@@ -112,13 +152,26 @@ function makeTray() {
           label,
           type: 'radio',
           checked: seconds === current,
-          click: () => setAutoMotivate(seconds),
+          click: () => {
+            setAutoMotivate(seconds)
+            refreshMenu()
+          },
         })),
       },
+      { type: 'separator' },
+      update,
       { type: 'separator' },
       { label: 'Quit Sushi Buddy', role: 'quit' },
     ]),
   )
+}
+
+function makeTray() {
+  const icon = nativeImage.createFromPath(path.join(ASSETS, 'MenuBarIcon.png'))
+  const side = process.platform === 'darwin' ? 18 : 32
+  tray = new Tray(icon.resize({ width: side, height: side, quality: 'best' }))
+  tray.setToolTip('Sushi Buddy')
+  refreshMenu()
   // On Windows a left click on a tray icon opens nothing by default: make it fly.
   if (process.platform === 'win32') tray.on('click', fly)
 }
@@ -170,6 +223,12 @@ if (!app.requestSingleInstanceLock()) {
         app.quit()
       })
     }
+    if (process.argv.includes('--check-updates')) {
+      return checkForUpdate(app.getVersion()).then(result => {
+        console.log(`Installed ${app.getVersion()}: ${JSON.stringify(result)}`)
+        app.quit()
+      })
+    }
     const previewFile = argument('--preview')
     if (previewFile) {
       const moments = (argument('--at') ?? '0.9,3,5.9').split(',').map(Number)
@@ -178,6 +237,7 @@ if (!app.requestSingleInstanceLock()) {
     if (process.platform === 'darwin') app.dock?.hide()
     makeTray()
     startAutoMotivate()
+    startQuietUpdateChecks()
     if (process.argv.includes('--fly')) fly()
   })
 }

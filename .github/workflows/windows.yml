@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - run: npm test
       - run: npm run assets
 
       - name: Focus check reads Do not disturb
@@ -30,7 +31,7 @@ jobs:
         shell: bash
         run: >
           npx electron-packager . "Sushi Buddy" --platform=win32 --arch=x64 --out=dist --asar --overwrite
-          --ignore='^/(dist|scripts|node_modules)(/|$)' --ignore='^/(sync-assets\.js|\.gitignore)$'
+          --ignore='^/(dist|scripts|node_modules|test)(/|$)' --ignore='^/(sync-assets\.js|\.gitignore)$'
 
       - name: Render a flight
         shell: pwsh
