@@ -23,6 +23,7 @@ final class Sushi {
     let preferences: Preferences
     @ObservationIgnored let updates: Updates
     @ObservationIgnored let flights = FlightController()
+    @ObservationIgnored let tour = TourController()
 
     private(set) var lastSkip: Skip?
     private(set) var linesProblem: String?
@@ -38,6 +39,7 @@ final class Sushi {
     @ObservationIgnored private var breaks = BreakTimer(activeSince: .now)
     @ObservationIgnored private var claude = ClaudeTracker()
     @ObservationIgnored private var timekeeping: NSObjectProtocol?
+    @ObservationIgnored private var tourWaiting = false
     @ObservationIgnored private lazy var hotkey = Hotkey { [weak self] in self?.fly("motivate") }
     @ObservationIgnored private lazy var listener: Listener = {
         let listener = Listener(
@@ -65,6 +67,31 @@ final class Sushi {
                 self?.watch()
             }
         }
+        // The tour, once, a moment after launch so the menu bar icon is in place to fly to.
+        tourWaiting = !preferences.tourSeen
+        if tourWaiting {
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(2))
+                self?.startTourIfQuiet()
+            }
+        }
+    }
+
+    // MARK: Tour
+
+    /// Shows the tour now, as Settings and --tour do.
+    func startTour() {
+        tourWaiting = false
+        preferences.tourSeen = true
+        let shortcut = Hotkey.presets.first { $0.id == settings.hotkey && $0.id != "off" }?.label
+        tour.start(steps: Tour.steps(on: .mac, shortcut: shortcut), preferences: preferences)
+    }
+
+    /// The tour that starts on its own waits, like an automatic flight, while a quiet rule holds.
+    private func startTourIfQuiet() {
+        guard tourWaiting else { return }
+        let quiet = Quiet.reason(settings, SystemSignals.quietSignals(awayMinutes: settings.awayMinutes))
+        if Tour.startsOnItsOwn(seen: preferences.tourSeen, quiet: quiet) { startTour() }
     }
 
     /// Applies what changed in Settings (everything, at launch).
@@ -105,6 +132,10 @@ final class Sushi {
     /// Flies now. `occasion` is "motivate" or one of the line file's occasions; an automatic
     /// flight first checks the quiet rules.
     func fly(_ occasion: String, automatic: Bool = false, project: String? = nil, message: String? = nil) {
+        if tour.isRunning {
+            tour.react()
+            return
+        }
         if automatic, let reason = Quiet.reason(settings, SystemSignals.quietSignals(awayMinutes: settings.awayMinutes)) {
             lastSkip = Skip(occasion: occasion, reason: reason, at: .now)
             logger.notice("skipped \(occasion, privacy: .public): \(reason.explanation, privacy: .public)")
@@ -189,6 +220,7 @@ final class Sushi {
 
     /// Every few seconds: have you come back, and is a break due?
     private func watch() {
+        startTourIfQuiet()
         let now = Date.now
         let idle = SystemSignals.idleSeconds
         let away = Quiet.isAway(idleSeconds: idle, locked: SystemSignals.isLocked, awayMinutes: settings.awayMinutes)

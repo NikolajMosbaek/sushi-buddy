@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <link rel="stylesheet" href="sushi.css" />
+    <style>
+      /* The step's bubble. It stays put while the sushi bobs, so its buttons hold still. */
+      #bubble {
+        position: absolute;
+        box-sizing: border-box;
+        width: 380px;
+        padding: 20px;
+        opacity: 0;
+        border: 3px solid #1a1a1a;
+        border-radius: 18px;
+        background: #fff;
+        color: #1a1a1a;
+        font: 15px ui-rounded, 'SF Pro Rounded', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        user-select: none;
+      }
+      /* A tail on the side facing the sushi, level with its middle (72px from the bubble's top or bottom). */
+      #bubble::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        margin-top: -8px;
+        background: #fff;
+        border-top: 3px solid #1a1a1a;
+        border-right: 3px solid #1a1a1a;
+      }
+      #bubble.tail-right::after {
+        right: -11px;
+        transform: rotate(45deg);
+      }
+      #bubble.tail-left::after {
+        left: -11px;
+        transform: rotate(-135deg);
+      }
+      #bubble.tail-top::after {
+        top: 72px;
+      }
+      #bubble.tail-bottom::after {
+        bottom: 64px;
+      }
+      #text {
+        margin: 0 0 14px;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+      #switches label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 8px;
+        font-weight: 500;
+      }
+      #switches input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: #1a1a1a;
+      }
+      #switches:empty {
+        display: none;
+      }
+      button {
+        font: 700 14px ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+        color: #1a1a1a;
+        padding: 7px 14px;
+        border: 2px solid #1a1a1a;
+        border-radius: 999px;
+        background: #f0f0f0;
+        cursor: pointer;
+      }
+      button:active {
+        opacity: 0.7;
+      }
+      #copy {
+        margin: 6px 0 4px;
+      }
+      #next {
+        background: #ed6650;
+        color: #fff;
+      }
+      #skip {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: #8a8a8a;
+        font-weight: 500;
+        font-size: 13px;
+      }
+      footer {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 14px;
+        font-size: 13px;
+      }
+      #count {
+        margin-left: auto;
+        color: #8a8a8a;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sushi">
+      <img src="assets/body.png" alt="" />
+      <img id="blades" src="assets/propeller.png" alt="" />
+    </div>
+    <div id="hearts"></div>
+    <div id="bubble">
+      <p id="text"></p>
+      <div id="switches"></div>
+      <button id="copy" hidden></button>
+      <footer>
+        <button id="skip">Skip tour</button>
+        <span id="count"></span>
+        <button id="next">Next</button>
+      </footer>
+    </div>
+    <script src="flight.js"></script>
+    <script src="tour.js"></script>
+    <script src="sushi-view.js"></script>
+    <script src="tour-page.js"></script>
+  </body>
+</html>

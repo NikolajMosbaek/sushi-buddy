@@ -42,10 +42,16 @@ struct Flight {
 
     let size: CGFloat = 180
     let flyIn: TimeInterval = 2.0
-    let hover: TimeInterval = 3.2
+    /// The tour holds the hover (`.infinity`) until it lets go.
+    var hover: TimeInterval = 3.2
     let flyOut: TimeInterval = 2.0
 
     var duration: TimeInterval { flyIn + hover + flyOut }
+
+    /// Ends the hover at `time`: the bubble fades, then the sushi flies off from where it is.
+    mutating func letGo(at time: TimeInterval) {
+        hover = max(time - flyIn, 0) + 0.35
+    }
 
     static func random(on canvas: CGSize, message: String, path: FlightPath) -> Flight {
         Flight(

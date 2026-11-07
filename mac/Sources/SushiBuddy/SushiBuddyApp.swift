@@ -61,6 +61,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        if let folder = value(after: "--preview-tour") {
+            Task {
+                let steps = Tour.steps(on: .mac, shortcut: Hotkey.presets[1].label)
+                await TourController.writePreviews(to: URL(fileURLWithPath: folder), preferences: preferences, steps: steps)
+                NSApp.terminate(nil)
+            }
+            return
+        }
         if let folder = value(after: "--preview-settings") {
             Task {
                 await SettingsWindow.writePreviews(to: URL(fileURLWithPath: folder), sushi: sushi, launchAtLogin: launchAtLogin)
@@ -95,5 +103,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sushi.start()
         if arguments.contains("--fly") { sushi.fly("motivate") }
         if arguments.contains("--settings") { showSettings() }
+        if arguments.contains("--tour") {
+            Task {
+                // After the menu bar icon is in place, so the sushi can find it.
+                try? await Task.sleep(for: .seconds(1))
+                sushi.startTour()
+            }
+        }
     }
 }

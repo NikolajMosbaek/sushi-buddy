@@ -64,9 +64,17 @@
     }
   }
 
-  function bubbleVisibility(time) {
+  /** How long a flight hovers: HOVER, or as long as the tour holds it (`hover: Infinity`). */
+  const hoverOf = flight => flight.hover ?? HOVER
+
+  /** Ends the hover at `time`: the bubble fades, then the sushi flies off from where it is. */
+  function letGo(flight, time) {
+    return { ...flight, hover: Math.max(time - FLY_IN, 0) + 0.35 }
+  }
+
+  function bubbleVisibility(flight, time) {
     const appear = FLY_IN - 0.3
-    const vanish = FLY_IN + HOVER
+    const vanish = FLY_IN + hoverOf(flight)
     if (time < appear || time > vanish) return 0
     return Math.min((time - appear) / 0.35, (vanish - time) / 0.35, 1)
   }
@@ -77,6 +85,7 @@
     const endX = flight.isLeftToRight ? flight.width + SIZE : -SIZE
     const bob = Math.sin(time * 2 * Math.PI * 0.9) * 14
     const wobble = Math.sin(time * 2 * Math.PI * 0.6) * 3
+    const hover = hoverOf(flight)
 
     let x
     let lean
@@ -86,13 +95,13 @@
       x = startX + (flight.hoverX - startX) * easeOut(u)
       lean = 12 * (1 - u)
       offset = pathOffset(flight.path, true, u, direction)
-    } else if (time < FLY_IN + HOVER) {
+    } else if (time < FLY_IN + hover) {
       x = flight.hoverX + Math.sin((time - FLY_IN) * 2 * Math.PI * 0.35) * 8
       lean = 0
     } else {
       // Leaves from where the hover's sway ended, so nothing jumps.
-      const leaveX = flight.hoverX + Math.sin(HOVER * 2 * Math.PI * 0.35) * 8
-      const u = Math.min((time - FLY_IN - HOVER) / FLY_OUT, 1)
+      const leaveX = flight.hoverX + Math.sin(hover * 2 * Math.PI * 0.35) * 8
+      const u = Math.min((time - FLY_IN - hover) / FLY_OUT, 1)
       x = leaveX + (endX - leaveX) * easeIn(u)
       lean = 12 * u
       offset = pathOffset(flight.path, false, u, direction)
@@ -102,11 +111,30 @@
       x: x + offset.dx,
       y: flight.altitude + bob + offset.dy,
       tilt: direction * lean + wobble + offset.spin,
-      bubble: bubbleVisibility(time),
+      bubble: bubbleVisibility(flight, time),
     }
   }
 
-  const api = { SIZE, FLY_IN, HOVER, FLY_OUT, DURATION, PATHS, randomFlight, previewFlight, pathOffset, pose }
+  /**
+   * What a pet does: two quick extra turns of the propeller, a squish, and hearts floating up.
+   * `pets` are seconds into the flight. Same as PetReaction in FlightView.swift.
+   */
+  function petReaction(pets, time) {
+    let extraSpin = 0
+    let squish = 1
+    const hearts = []
+    for (const pet of pets) {
+      if (time < pet) continue
+      const age = time - pet
+      const spin = Math.min(age / 0.9, 1)
+      extraSpin += 720 * (1 - Math.pow(1 - spin, 3))
+      if (age < 0.4) squish = 1 + 0.18 * Math.sin((Math.PI * age) / 0.4)
+      if (age < 1.2) for (const dx of [-40, 0, 40]) hearts.push({ dx, progress: age / 1.2 })
+    }
+    return { extraSpin, squish, hearts }
+  }
+
+  const api = { SIZE, FLY_IN, HOVER, FLY_OUT, DURATION, PATHS, randomFlight, previewFlight, pathOffset, pose, letGo, petReaction }
   if (typeof module === 'object' && module.exports) module.exports = api
   else root.SushiFlight = api
 })(this)

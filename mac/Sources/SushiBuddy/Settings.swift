@@ -136,4 +136,10 @@ final class Preferences {
         get { defaults.data(forKey: "streak").flatMap { try? JSONDecoder().decode(Streak.self, from: $0) } }
         set { defaults.set(newValue.flatMap { try? JSONEncoder().encode($0) }, forKey: "streak") }
     }
+
+    /// Whether the tour has started once; bookkeeping, not a setting.
+    var tourSeen: Bool {
+        get { defaults.bool(forKey: "tourSeen") }
+        set { defaults.set(newValue, forKey: "tourSeen") }
+    }
 }

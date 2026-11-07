@@ -93,6 +93,11 @@ private struct GeneralTab: View {
                 }
                 if let problem = sushi.hotkeyProblem { Problem(problem) }
                 Toggle("Check for updates automatically", isOn: $settings.checkForUpdates)
+                HStack {
+                    Text("Let the sushi show you around again.").foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Take the Tour") { sushi.startTour() }
+                }
             }
             Section("Flights") {
                 Picker("Flight path", selection: $settings.flightPath) {

@@ -3,7 +3,7 @@ const { app, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMa
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { DURATION, previewFlight, randomFlight } = require('./flight')
+const { DURATION, FLY_IN, previewFlight, randomFlight } = require('./flight')
 const { CHOICES, normalize, readFile, update, writeFile } = require('./settings')
 const { advanceStreak, mergeLines, pickLine } = require('./lines')
 const { QUIET_REASONS, breakTick, isAway, presenceTick, quietReason } = require('./presence')
@@ -12,10 +12,12 @@ const { ClaudeTracker } = require('./claude')
 const { PORT, listen } = require('./listener')
 const { readSystem, signalsFrom } = require('./system')
 const { check: checkForUpdate } = require('./update')
+const { place: placeTour, startsOnItsOwn, steps: tourSteps } = require('./tour')
 
 const ASSETS = path.join(__dirname, 'assets')
 const OVERLAY = path.join(__dirname, 'overlay.html')
 const SETTINGS_PAGE = path.join(__dirname, 'settings.html')
+const TOUR = path.join(__dirname, 'tour.html')
 const BUNDLED_LINES = JSON.parse(fs.readFileSync(path.join(ASSETS, 'lines.json'), 'utf8'))
 const INSTALL_HOOKS = 'claude plugin install sushi-buddy --marketplace NikolajMosbaek/sushi-buddy'
 const HOTKEY_LABELS = {
@@ -39,16 +41,10 @@ const flights = new Set()
 
 // MARK: Flying
 
-function launch(message) {
-  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
-  const { x, y, width, height } = display.bounds
-  const flight = randomFlight({ width, height }, message, settings.flightPath)
-
+/** A see-through window over a whole display, for a flight or the tour. */
+function overlayWindow(bounds, preload) {
   const overlay = new BrowserWindow({
-    x,
-    y,
-    width,
-    height,
+    ...bounds,
     show: false,
     frame: false,
     transparent: true,
@@ -63,12 +59,21 @@ function launch(message) {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      preload: path.join(__dirname, 'overlay-preload.js'),
+      preload: path.join(__dirname, preload),
       autoplayPolicy: 'no-user-gesture-required',
     },
   })
   overlay.setAlwaysOnTop(true, 'screen-saver')
   overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  return overlay
+}
+
+function launch(message) {
+  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
+  const { width, height } = display.bounds
+  const flight = randomFlight({ width, height }, message, settings.flightPath)
+
+  const overlay = overlayWindow(display.bounds, 'overlay-preload.js')
   // With petting on, the overlay still hears the mouse moving, so it can take clicks while it's over the sushi.
   overlay.setIgnoreMouseEvents(true, { forward: settings.petting })
   flights.add(overlay)
@@ -90,6 +95,11 @@ function launch(message) {
  * first checks the quiet rules, and a skip is shown in Settings so a quiet app doesn't look broken.
  */
 async function fly(occasion = 'motivate', { automatic = false, project, message } = {}) {
+  // During the tour the tour's sushi spins instead of a second one flying.
+  if (tourWindow) {
+    tourWindow.webContents.send('tour:react')
+    return
+  }
   if (automatic) {
     const reason = quietReason(settings, await quietSignals())
     if (reason) {
@@ -158,6 +168,7 @@ function restartAutoMotivate() {
 
 /** Every few seconds: have you come back, and is a break due? */
 function watch() {
+  startTourIfQuiet()
   const now = Date.now()
   const { idleSeconds, locked } = idle()
   const away = isAway({ idleSeconds, locked }, settings.awayMinutes)
@@ -283,7 +294,78 @@ async function checkAndTell() {
   }
 }
 
+// MARK: Tour
+
+let tourWindow = null
+let tourWaiting = false
+let lastTourCheck = 0
+// The tour may change only the settings it offers.
+const TOUR_KEYS = new Set(tourSteps('windows', null).flatMap(step => step.switches.map(toggle => toggle.key)))
+
+/** The display with the tray icon and where on it the sushi waits: by the icon, or bottom right when it can't be found. */
+function tourPlace() {
+  const icon = tray?.getBounds()
+  const found = icon && icon.width > 0 && icon.height > 0
+  const { bounds, workArea } = found ? screen.getDisplayMatching(icon) : screen.getPrimaryDisplay()
+  const anchor = found
+    ? { x: icon.x + icon.width / 2 - bounds.x, y: icon.y + icon.height / 2 - bounds.y }
+    : { x: bounds.width, y: bounds.height }
+  const work = { x: workArea.x - bounds.x, y: workArea.y - bounds.y, width: workArea.width, height: workArea.height }
+  return { bounds, spot: placeTour(anchor, work) }
+}
+
+/** Shows the tour now, as Settings and --tour do. */
+function startTour() {
+  tourWaiting = false
+  writeFile(settingsFile(), { ...readFile(settingsFile()), tourSeen: true })
+  if (tourWindow) return
+  const { bounds, spot } = tourPlace()
+  tourWindow = overlayWindow(bounds, 'tour-preload.js')
+  // The tour still hears the mouse moving, so it can take clicks on the sushi and the bubble.
+  tourWindow.setIgnoreMouseEvents(true, { forward: true })
+  tourWindow.once('ready-to-show', () => tourWindow?.showInactive())
+  tourWindow.on('closed', () => {
+    tourWindow = null
+  })
+  tourWindow.loadFile(TOUR, {
+    query: {
+      spot: JSON.stringify(spot),
+      canvas: JSON.stringify({ width: bounds.width, height: bounds.height }),
+      shortcut: settings.hotkey === 'off' ? '' : HOTKEY_LABELS[settings.hotkey],
+    },
+  })
+}
+
+/**
+ * The tour that starts on its own waits, like an automatic flight, while a quiet rule holds.
+ * The quiet signals run PowerShell, so while it waits it looks once a minute.
+ */
+async function startTourIfQuiet() {
+  if (!tourWaiting || Date.now() - lastTourCheck < 60 * 1000) return
+  lastTourCheck = Date.now()
+  const seen = readFile(settingsFile()).tourSeen === true
+  if (startsOnItsOwn(seen, quietReason(settings, await quietSignals()))) startTour()
+}
+
+ipcMain.handle('tour:settings', () => settings)
+ipcMain.handle('tour:set', (_event, key, value) => {
+  if (!TOUR_KEYS.has(key)) throw new Error(`the tour doesn't offer ${key}`)
+  changeSetting(key, value)
+  return settings
+})
+ipcMain.handle('tour:copy-install', () => clipboard.writeText(INSTALL_HOOKS))
+ipcMain.on('tour:done', event => BrowserWindow.fromWebContents(event.sender)?.destroy())
+
 // MARK: Settings
+
+/** Stores and applies one change, and shows it in the menu and Settings. */
+function changeSetting(key, value) {
+  const old = settings
+  settings = update(settingsFile(), key, value)
+  apply(old)
+  refreshMenu()
+  sendState()
+}
 
 /** Applies what changed (everything, at launch). */
 function apply(old) {
@@ -322,12 +404,10 @@ ipcMain.handle('settings:get', () => state())
 ipcMain.handle('settings:set', (_event, key, value) => {
   if (key === 'launchAtLogin') {
     app.setLoginItemSettings({ openAtLogin: value === true })
+    refreshMenu()
   } else {
-    const old = settings
-    settings = update(settingsFile(), key, value)
-    apply(old)
+    changeSetting(key, value)
   }
-  refreshMenu()
   return state()
 })
 
@@ -357,6 +437,9 @@ ipcMain.handle('settings:action', async (_event, action) => {
       break
     case 'copyInstall':
       clipboard.writeText(INSTALL_HOOKS)
+      break
+    case 'tour':
+      startTour()
       break
   }
   return state()
@@ -471,6 +554,38 @@ async function preview(file, moments, flightPath, pets) {
   app.quit()
 }
 
+// --preview-tour <folder>: renders every step of the tour to tour-<n>-<step>.png and quits.
+async function previewTour(folder) {
+  const canvas = { width: 1100, height: 640 }
+  const spot = placeTour({ x: 900, y: 660 }, { x: 0, y: 0, width: 1100, height: 600 })
+  const window = new BrowserWindow({
+    ...canvas,
+    show: false,
+    frame: false,
+    transparent: true,
+    webPreferences: { offscreen: true, preload: path.join(__dirname, 'tour-preload.js') },
+  })
+  const steps = tourSteps('windows', null)
+  for (const [number, step] of steps.entries()) {
+    await window.loadFile(TOUR, {
+      query: {
+        spot: JSON.stringify(spot),
+        canvas: JSON.stringify(canvas),
+        shortcut: HOTKEY_LABELS['Control+Alt+Shift+S'],
+        step: String(number),
+        at: String(FLY_IN + 1),
+      },
+    })
+    await new Promise(resolve => setTimeout(resolve, 400))
+    window.webContents.invalidate()
+    const image = await window.webContents.capturePage()
+    const out = path.join(folder, `tour-${number + 1}-${step.id}.png`)
+    fs.writeFileSync(out, image.toPNG())
+    console.log(out)
+  }
+  app.quit()
+}
+
 // --preview-settings <folder>: renders the Settings page to settings.png and quits.
 async function previewSettings(folder) {
   const window = new BrowserWindow({ ...settingsWindowOptions({ offscreen: true }), show: false, height: 2200 })
@@ -496,6 +611,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', (_event, argv) => {
     if (argv.includes('--fly')) fly()
     if (argv.includes('--settings')) showSettings()
+    if (argv.includes('--tour')) startTour()
   })
   // Overlays and Settings come and go; the app lives in the tray until Quit.
   app.on('window-all-closed', () => {})
@@ -539,12 +655,18 @@ if (!app.requestSingleInstanceLock()) {
     }
     const settingsFolder = argument('--preview-settings')
     if (settingsFolder) return previewSettings(settingsFolder)
+    const tourFolder = argument('--preview-tour')
+    if (tourFolder) return previewTour(tourFolder)
 
     if (process.platform === 'darwin') app.dock?.hide()
     makeTray()
     apply(null)
     watchTimer = setInterval(watch, 5000)
+    // The tour, once, a moment after launch so the tray icon is in place to fly to.
+    tourWaiting = readFile(settingsFile()).tourSeen !== true
+    if (tourWaiting) setTimeout(startTourIfQuiet, 2000)
     if (process.argv.includes('--fly')) fly()
     if (process.argv.includes('--settings')) showSettings()
+    if (process.argv.includes('--tour')) setTimeout(startTour, 1000)
   })
 }

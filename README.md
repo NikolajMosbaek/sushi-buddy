@@ -8,6 +8,16 @@ on a timer, when a break is due, when you come back, when a Pomodoro ends, or wh
 finishes a long turn. Everything it does on its own is a switch in **Settings**, and it holds off
 while you're in a Focus, on a call, presenting or away.
 
+## The tour
+
+The first time it starts, the sushi flies up next to its menu bar / tray icon and shows you around,
+one step at a time in its speech bubble: where to find it, the shortcut, petting, its tricks, what it
+can do on its own, the quiet rules and Claude Code. Steps for things that start off (sound,
+Auto-motivate, break reminders, welcome back) have a checkbox to switch them on there and then;
+**Skip tour** ends it at any step. People updating from an earlier version get it once too, and
+**Settings → Take the Tour** runs it again. Like an automatic flight, the tour that starts on its
+own waits while a quiet rule holds, so it never opens in the middle of a call or a presentation.
+
 | | macOS | Windows |
 |---|---|---|
 | Folder | `mac/` (Swift, SwiftUI + AppKit) | `windows/` (Electron) |
@@ -148,10 +158,12 @@ macOS asks the first time: System Settings → Privacy & Security → **Open Any
 - `--fly`: fly once at launch. On Windows a second launch with `--fly` reaches the running app, so a
   shortcut with it works as a trigger.
 - `--settings`: open Settings at launch.
+- `--tour`: show the tour at launch.
 - `--status`: print what the quiet rules see (Windows shows it in a dialog).
 - `--preview <file.png>`: render moments of a flight without showing anything. `--path loop` picks the
   path; on Windows `--at 0.9,3,5.9` picks the seconds and `--pets 2.2` pets it.
 - `--preview-settings <folder>`: render the Settings window to PNGs.
+- `--preview-tour <folder>`: render every step of the tour to PNGs.
 - `--launch-at-login on|off`: set it from a script (macOS also takes `status`). On Windows it is the
   `Run` registry entry for the exe where it is now, so turn it on again after moving the folder.
 - `--check-updates`: print what the update check finds.

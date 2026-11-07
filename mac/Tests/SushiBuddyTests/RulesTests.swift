@@ -381,4 +381,150 @@ private let bundledLines: Lines.Book = {
         #expect(settled.hearts.isEmpty)
         #expect(PetReaction(pets: [5.0], time: 1.0).hearts.isEmpty)
     }
+
+    @Test func aHeldFlightHoversUntilLetGoThenFadesItsBubbleAndLeavesWithoutAJump() {
+        var flight = Flight.preview(on: CGSize(width: 1600, height: 900))
+        flight.hover = .infinity
+        let hovering = flight.pose(at: 60)
+        #expect(abs(hovering.center.x - flight.hoverX) <= 8)
+        #expect(hovering.bubble == 1)
+
+        flight.letGo(at: 60)
+        let letGo = flight.pose(at: 60)
+        #expect(letGo.center == hovering.center)
+        #expect(letGo.bubble == 1)
+        #expect(flight.pose(at: 60.36).bubble == 0)
+        let edge = flight.flyIn + flight.hover
+        let before = flight.pose(at: edge - 1e-6).center
+        let after = flight.pose(at: edge + 1e-6).center
+        #expect(hypot(before.x - after.x, before.y - after.y) < 0.01)
+        #expect(flight.pose(at: edge + flight.flyOut).center.x > 1600)
+    }
+}
+
+@Suite struct TourRules {
+    private let switches = Tour.steps(on: .mac, shortcut: nil).flatMap(\.switches)
+
+    @Test func everyoneSeesTheTourOnceAtAMomentAnAutomaticFlightCouldGo() {
+        #expect(Tour.startsOnItsOwn(seen: false, quiet: nil))
+        #expect(!Tour.startsOnItsOwn(seen: true, quiet: nil))
+        #expect(!Tour.startsOnItsOwn(seen: false, quiet: .call))
+    }
+
+    @Test func theStepsShowEveryFeatureAndEndWithWhereToFindThemAgain() throws {
+        let steps = Tour.steps(on: .mac, shortcut: "⌃⌥⌘S")
+        #expect(steps.map(\.id) == ["hello", "home", "shortcut", "pet", "tricks", "onTheirOwn", "quiet", "claude", "bye"])
+        #expect(steps[2].text.contains("⌃⌥⌘S"))
+        #expect(Tour.steps(on: .mac, shortcut: nil)[2].text.contains("Settings"))
+        #expect(steps.filter(\.showsLoop).map(\.id) == ["tricks"])
+        #expect(try #require(steps.first { $0.id == "claude" }).copies == Tour.claudeInstall)
+        #expect(switches.map(\.key) == ["petting", "sound", "autoMotivateSeconds", "breakReminderMinutes", "welcomeBack"])
+        #expect(try #require(steps.last).text.contains("Settings"))
+        #expect(Tour.steps(on: .windows, shortcut: nil)[1].text.contains("tray"))
+    }
+
+    @Test func aSwitchTurnsOnWhatItOffersAndOffBackToOff() {
+        let offered: [String: AnyHashable] = ["petting": true, "sound": "chime", "autoMotivateSeconds": 3600, "breakReminderMinutes": 60, "welcomeBack": true]
+        let off: [String: AnyHashable] = ["petting": false, "sound": "off", "autoMotivateSeconds": 0, "breakReminderMinutes": 0, "welcomeBack": false]
+        for toggle in switches {
+            var settings = Settings()
+            toggle.turn(&settings, false)
+            #expect(!toggle.isOn(settings))
+            #expect(settings.values[toggle.key] as? AnyHashable == off[toggle.key])
+            toggle.turn(&settings, true)
+            #expect(toggle.isOn(settings))
+            #expect(settings.values[toggle.key] as? AnyHashable == offered[toggle.key])
+        }
+    }
+
+    @Test func aChoiceMadeInSettingsCountsAsOnAndIsKept() throws {
+        var settings = Settings()
+        settings.autoMotivateSeconds = 7200
+        settings.sound = "whirr"
+        for key in ["autoMotivateSeconds", "sound"] {
+            let toggle = try #require(switches.first { $0.key == key })
+            #expect(toggle.isOn(settings))
+            toggle.turn(&settings, true)
+        }
+        #expect(settings.autoMotivateSeconds == 7200)
+        #expect(settings.sound == "whirr")
+    }
+
+    @Test func theSushiWaitsByItsIconWithTheBubbleOnTheRoomierSide() {
+        let underMenuBar = CGRect(x: 0, y: 33, width: 1512, height: 916)
+        #expect(Tour.place(anchor: CGPoint(x: 995, y: 16), in: underMenuBar)
+            == Tour.Spot(x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true))
+        let aboveTaskbar = CGRect(x: 0, y: 0, width: 1920, height: 1032)
+        #expect(Tour.place(anchor: CGPoint(x: 1850, y: 1056), in: aboveTaskbar)
+            == Tour.Spot(x: 1812, y: 924, bubbleOnLeft: true, bubbleBelow: false))
+        let besideLeftTaskbar = CGRect(x: 48, y: 0, width: 1872, height: 1080)
+        #expect(Tour.place(anchor: CGPoint(x: 24, y: 1000), in: besideLeftTaskbar)
+            == Tour.Spot(x: 156, y: 972, bubbleOnLeft: false, bubbleBelow: false))
+    }
+
+    @Test func theBubbleSitsBesideTheSushiNotOverIt() {
+        let spots = [
+            Tour.Spot(x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true),
+            Tour.Spot(x: 156, y: 972, bubbleOnLeft: false, bubbleBelow: false),
+        ]
+        #expect(spots.map(Tour.bubbleCorner) == [CGPoint(x: 896, y: 69), CGPoint(x: 255, y: 1044)])
+    }
+
+    @Test func theTourTakesClicksOnlyOnTheSushiAndTheShownBubble() {
+        let sushi = CGPoint(x: 995, y: 141)
+        let bubble = CGRect(x: 500, y: 69, width: 380, height: 200)
+        #expect(Tour.isOver(CGPoint(x: 1010, y: 160), sushi: sushi, bubble: bubble))
+        #expect(Tour.isOver(CGPoint(x: 600, y: 250), sushi: sushi, bubble: bubble))
+        #expect(!Tour.isOver(CGPoint(x: 300, y: 600), sushi: sushi, bubble: bubble))
+        #expect(!Tour.isOver(CGPoint(x: 600, y: 250), sushi: sushi, bubble: .null))
+    }
+
+    @Test func theLoopDemoLeavesTheLineAndComesBackWhereItStarted() {
+        var flight = Flight.preview(on: CGSize(width: 1600, height: 900))
+        flight.hover = .infinity
+        for time in [10.0, 12.0] {
+            let looping = Tour.pose(flight, at: time, loops: [10]).center
+            let plain = flight.pose(at: time).center
+            #expect(hypot(looping.x - plain.x, looping.y - plain.y) < 0.01)
+        }
+        let midLoop = Tour.pose(flight, at: 11, loops: [10]).center
+        #expect(abs(midLoop.y - flight.pose(at: 11).center.y) > 40)
+    }
+}
+
+@MainActor
+@Suite struct TourModelRules {
+    @Test func nextWalksTheStepsLoopsOnTricksAndDoneLetsGoOnce() {
+        let model = TourModel(
+            steps: Tour.steps(on: .mac, shortcut: nil),
+            spot: Tour.Spot(x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true),
+            canvas: CGSize(width: 1512, height: 982)
+        )
+        var finished = 0
+        model.onFinish = { finished += 1 }
+        for _ in 0..<4 { model.next() }
+        #expect(model.step.id == "tricks")
+        #expect(model.loops.count == 1)
+        while !model.isLast { model.next() }
+        #expect(!model.isLeaving)
+        model.next()
+        #expect(model.isLeaving)
+        model.next()
+        model.finish()
+        #expect(finished == 1)
+        #expect(model.step.id == "bye")
+    }
+
+    @Test func skippingLetsGoFromAnyStep() {
+        let model = TourModel(
+            steps: Tour.steps(on: .mac, shortcut: nil),
+            spot: Tour.Spot(x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true),
+            canvas: CGSize(width: 1512, height: 982)
+        )
+        model.next()
+        model.finish()
+        #expect(model.isLeaving)
+        model.next()
+        #expect(model.step.id == "home")
+    }
 }

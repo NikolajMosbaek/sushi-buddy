@@ -11,7 +11,8 @@ const { describe, nextPhase, startPomodoro } = require('../pomodoro')
 const { ClaudeTracker, projectName } = require('../claude')
 const { flyMessage, listen, vet } = require('../listener')
 const { parseSystem, signalsFrom } = require('../system')
-const { DURATION, FLY_IN, FLY_OUT, HOVER, PATHS, pathOffset, pose, previewFlight } = require('../flight')
+const { DURATION, FLY_IN, FLY_OUT, HOVER, PATHS, letGo, pathOffset, pose, previewFlight } = require('../flight')
+const tour = require('../tour')
 
 const MINUTE = 60 * 1000
 const bundled = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'Resources', 'lines.json'), 'utf8'))
@@ -291,4 +292,95 @@ test('the paths really leave the line somewhere', () => {
     const strays = times.some(time => Math.abs(pose(flight, time).y - pose(classic, time).y) > 20)
     assert.ok(strays, path)
   }
+})
+
+test('a held flight hovers until let go, then fades its bubble and leaves without a jump', () => {
+  const held = { ...previewFlight({ width: 1600, height: 900 }), hover: Infinity }
+  const hovering = pose(held, 60)
+  assert.ok(Math.abs(hovering.x - held.hoverX) <= 8)
+  assert.equal(hovering.bubble, 1)
+
+  const leaving = letGo(held, 60)
+  assert.deepEqual(pose(leaving, 60), hovering)
+  assert.equal(pose(leaving, 60.36).bubble, 0)
+  const edge = FLY_IN + leaving.hover
+  const before = pose(leaving, edge - 1e-6)
+  const after = pose(leaving, edge + 1e-6)
+  assert.ok(Math.hypot(before.x - after.x, before.y - after.y) < 0.01)
+  assert.ok(pose(leaving, edge + FLY_OUT).x > 1600)
+})
+
+test('everyone sees the tour once, at a moment an automatic flight could go', () => {
+  assert.equal(tour.startsOnItsOwn(false, null), true)
+  assert.equal(tour.startsOnItsOwn(true, null), false)
+  assert.equal(tour.startsOnItsOwn(false, 'call'), false)
+})
+
+test('the tour shows every feature and ends with where to find them again', () => {
+  const steps = tour.steps('mac', '⌃⌥⌘S')
+  assert.deepEqual(steps.map(step => step.id), ['hello', 'home', 'shortcut', 'pet', 'tricks', 'onTheirOwn', 'quiet', 'claude', 'bye'])
+  assert.ok(steps[2].text.includes('⌃⌥⌘S'))
+  assert.ok(tour.steps('mac', null)[2].text.includes('Settings'))
+  assert.deepEqual(steps.filter(step => step.showsLoop).map(step => step.id), ['tricks'])
+  assert.equal(steps.find(step => step.id === 'claude').copies, tour.CLAUDE_INSTALL)
+  const keys = steps.flatMap(step => step.switches).map(toggle => toggle.key)
+  assert.deepEqual(keys, ['petting', 'sound', 'autoMotivateSeconds', 'breakReminderMinutes', 'welcomeBack'])
+  assert.ok(steps.at(-1).text.includes('Settings'))
+  assert.ok(tour.steps('windows', null)[1].text.includes('tray'))
+})
+
+test('a tour switch turns on what it offers and off back to off', () => {
+  const offered = { petting: true, sound: 'chime', autoMotivateSeconds: 3600, breakReminderMinutes: 60, welcomeBack: true }
+  const off = { petting: false, sound: 'off', autoMotivateSeconds: 0, breakReminderMinutes: 0, welcomeBack: false }
+  for (const toggle of tour.steps('windows', null).flatMap(step => step.switches)) {
+    let settings = { ...DEFAULTS, [toggle.key]: tour.valueFor(toggle, DEFAULTS, false) }
+    assert.equal(tour.isOn(toggle, settings), false, toggle.key)
+    assert.equal(settings[toggle.key], off[toggle.key])
+    settings = { ...settings, [toggle.key]: tour.valueFor(toggle, settings, true) }
+    assert.equal(tour.isOn(toggle, settings), true, toggle.key)
+    assert.equal(settings[toggle.key], offered[toggle.key])
+  }
+})
+
+test('a choice made in Settings counts as on and is kept', () => {
+  const switches = tour.steps('windows', null).flatMap(step => step.switches)
+  const settings = { ...DEFAULTS, autoMotivateSeconds: 7200, sound: 'whirr' }
+  for (const key of ['autoMotivateSeconds', 'sound']) {
+    const toggle = switches.find(one => one.key === key)
+    assert.equal(tour.isOn(toggle, settings), true)
+    assert.equal(tour.valueFor(toggle, settings, true), settings[key])
+  }
+})
+
+test('the tour sushi waits by its icon with the bubble on the roomier side', () => {
+  const underMenuBar = { x: 0, y: 33, width: 1512, height: 916 }
+  assert.deepEqual(tour.place({ x: 995, y: 16 }, underMenuBar), { x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true })
+  const aboveTaskbar = { x: 0, y: 0, width: 1920, height: 1032 }
+  assert.deepEqual(tour.place({ x: 1850, y: 1056 }, aboveTaskbar), { x: 1812, y: 924, bubbleOnLeft: true, bubbleBelow: false })
+  const besideLeftTaskbar = { x: 48, y: 0, width: 1872, height: 1080 }
+  assert.deepEqual(tour.place({ x: 24, y: 1000 }, besideLeftTaskbar), { x: 156, y: 972, bubbleOnLeft: false, bubbleBelow: false })
+})
+
+test('the tour bubble sits beside the sushi, not over it', () => {
+  assert.deepEqual(tour.bubbleCorner({ x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true }), { x: 896, y: 69 })
+  assert.deepEqual(tour.bubbleCorner({ x: 156, y: 972, bubbleOnLeft: false, bubbleBelow: false }), { x: 255, y: 1044 })
+})
+
+test('the tour takes clicks only on the sushi and the shown bubble', () => {
+  const sushi = { x: 995, y: 141 }
+  const bubble = { x: 500, y: 69, width: 380, height: 200 }
+  assert.equal(tour.isOver({ x: 1010, y: 160 }, sushi, bubble), true)
+  assert.equal(tour.isOver({ x: 600, y: 250 }, sushi, bubble), true)
+  assert.equal(tour.isOver({ x: 300, y: 600 }, sushi, bubble), false)
+  assert.equal(tour.isOver({ x: 600, y: 250 }, sushi, null), false)
+})
+
+test('the loop demo leaves the line and comes back where it started', () => {
+  const held = { ...previewFlight({ width: 1600, height: 900 }), hover: Infinity }
+  for (const time of [10, 12]) {
+    const looping = tour.tourPose(held, time, [10])
+    const plain = pose(held, time)
+    assert.ok(Math.hypot(looping.x - plain.x, looping.y - plain.y) < 0.01)
+  }
+  assert.ok(Math.abs(tour.tourPose(held, 11, [10]).y - pose(held, 11).y) > 40)
 })

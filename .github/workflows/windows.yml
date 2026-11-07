@@ -40,7 +40,7 @@ jobs:
           $info | Format-List ProductName, FileDescription, ProductVersion
           if ($info.ProductName -ne 'Sushi Buddy') { throw "ProductName is '$($info.ProductName)'" }
 
-      - name: Render flights and Settings
+      - name: Render flights, Settings and the tour
         shell: pwsh
         run: |
           $exe = "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe"
@@ -48,7 +48,11 @@ jobs:
           Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-loop.png", '--path', 'loop', '--at', '0.9'
           Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-pet.png", '--at', '2.5', '--pets', '2.2'
           Start-Process -Wait -FilePath $exe -ArgumentList '--preview-settings', "$env:GITHUB_WORKSPACE"
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\tour" | Out-Null
+          Start-Process -Wait -FilePath $exe -ArgumentList '--preview-tour', "$env:GITHUB_WORKSPACE\tour"
           Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png", "$env:GITHUB_WORKSPACE\settings.png" -ErrorAction Stop
+          $steps = @(Get-ChildItem "$env:GITHUB_WORKSPACE\tour\tour-*.png")
+          if ($steps.Count -ne 9) { throw "rendered $($steps.Count) tour steps, not 9" }
 
       - name: The listener answers on 127.0.0.1
         shell: pwsh
@@ -93,3 +97,4 @@ jobs:
           path: |
             preview-*.png
             settings.png
+            tour/*.png

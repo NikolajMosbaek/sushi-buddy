@@ -18,10 +18,32 @@ struct FlightScene: View {
 
     var body: some View {
         let pose = flight.pose(at: time)
+
+        ZStack(alignment: .topLeading) {
+            PettedSushi(pose: pose, time: time, pets: pets, size: flight.size)
+
+            SpeechBubble(text: flight.message)
+                .scaleEffect(0.6 + 0.4 * pose.bubble, anchor: .bottom)
+                .opacity(pose.bubble)
+                .position(x: pose.center.x, y: pose.center.y - flight.size * 0.7)
+        }
+        .frame(width: flight.canvas.width, height: flight.canvas.height)
+        .ignoresSafeArea()
+    }
+}
+
+/// The sushi at one pose, with what its pets do to it. Fills the canvas it's placed on.
+struct PettedSushi: View {
+    let pose: Flight.Pose
+    let time: TimeInterval
+    let pets: [TimeInterval]
+    let size: CGFloat
+
+    var body: some View {
         let reaction = PetReaction(pets: pets, time: time)
 
         ZStack(alignment: .topLeading) {
-            SushiCopter(time: time, size: flight.size, extraSpin: reaction.extraSpin)
+            SushiCopter(time: time, size: size, extraSpin: reaction.extraSpin)
                 .scaleEffect(reaction.squish)
                 .rotationEffect(.degrees(pose.tilt))
                 .position(pose.center)
@@ -32,16 +54,9 @@ struct FlightScene: View {
                     .foregroundStyle(Color(red: 0.95, green: 0.3, blue: 0.45))
                     .scaleEffect(0.6 + 0.6 * heart.progress)
                     .opacity(1 - heart.progress)
-                    .position(x: pose.center.x + heart.dx, y: pose.center.y - flight.size * 0.3 - 90 * heart.progress)
+                    .position(x: pose.center.x + heart.dx, y: pose.center.y - size * 0.3 - 90 * heart.progress)
             }
-
-            SpeechBubble(text: flight.message)
-                .scaleEffect(0.6 + 0.4 * pose.bubble, anchor: .bottom)
-                .opacity(pose.bubble)
-                .position(x: pose.center.x, y: pose.center.y - flight.size * 0.7)
         }
-        .frame(width: flight.canvas.width, height: flight.canvas.height)
-        .ignoresSafeArea()
     }
 }
 
