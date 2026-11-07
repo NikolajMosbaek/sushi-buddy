@@ -83,6 +83,7 @@ jobs:
             $result = winget validate --manifest $folder | Out-String
             $result
             if ($result -notmatch 'Manifest validation succeeded') { throw "winget validate failed" }
+            $global:LASTEXITCODE = 0
           } else {
             Write-Warning "winget isn't installed on this runner, so the manifests weren't validated"
           }
