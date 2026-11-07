@@ -61,7 +61,7 @@ jobs:
 
   winget:
     needs: windows
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -69,7 +69,19 @@ jobs:
           name: windows
           path: zips
       - name: Write the manifests for this version
+        shell: bash
         run: node packaging/winget/manifests.js "$(node -p "require('./windows/package.json').version")" zips winget
+      - name: Validate them with winget
+        shell: pwsh
+        run: |
+          $version = node -p "require('./windows/package.json').version"
+          $folder = "winget\manifests\n\NikolajMosbaek\SushiBuddy\$version"
+          if (Get-Command winget -ErrorAction SilentlyContinue) {
+            winget validate --manifest $folder
+            if ($LASTEXITCODE -ne 0) { throw "winget validate failed" }
+          } else {
+            Write-Warning "winget isn't installed on this runner, so the manifests weren't validated"
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: winget-manifests

@@ -166,3 +166,7 @@ the Gatekeeper prompt.
 `windows/flight.js` is a line-for-line port of `mac/Sources/SushiBuddy/Flight.swift`, and the rules
 (lines, quiet, Pomodoro, Claude Code, the listener) are tested case for case on both sides; change
 one, change the other. `docs/make-gif.sh` remakes the GIF above.
+
+## License
+
+MIT, art included: see [LICENSE](LICENSE).

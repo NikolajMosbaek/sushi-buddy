@@ -56,7 +56,9 @@ PackageLocale: en-US
 Publisher: Nikolaj Søgaard Simonsen
 PackageName: Sushi Buddy
 PackageUrl: ${repository}
-License: Proprietary
+License: MIT
+LicenseUrl: ${repository}/blob/main/LICENSE
+Copyright: Copyright (c) 2026 Nikolaj Søgaard Simonsen
 ShortDescription: A sushi in a propeller hat that flies across your screen to cheer you on.
 Tags:
   - motivation
