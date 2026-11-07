@@ -14,7 +14,7 @@ if (!version || !zips || !out) {
 
 const id = 'NikolajMosbaek.SushiBuddy'
 const repository = 'https://github.com/NikolajMosbaek/sushi-buddy'
-const schema = '1.6.0'
+const schema = '1.28.0'
 const header = kind =>
   `# yaml-language-server: $schema=https://aka.ms/winget-manifest.${kind}.${schema}.schema.json\n`
 

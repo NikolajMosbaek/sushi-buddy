@@ -77,6 +77,7 @@ jobs:
           $version = node -p "require('./windows/package.json').version"
           $folder = "winget\manifests\n\NikolajMosbaek\SushiBuddy\$version"
           if (Get-Command winget -ErrorAction SilentlyContinue) {
+            "winget $(winget --version)"
             winget validate --manifest $folder
             if ($LASTEXITCODE -ne 0) { throw "winget validate failed" }
           } else {
