@@ -18,9 +18,4 @@ cask "sushi-buddy" do
     "~/Library/Application Support/Sushi Buddy",
     "~/Library/Preferences/com.nsscode.SushiBuddy.plist",
   ]
-
-  caveats <<~EOS
-    Until a release is notarized, macOS may refuse to open Sushi Buddy the first time.
-    Open it once anyway from System Settings → Privacy & Security → Open Anyway.
-  EOS
 end

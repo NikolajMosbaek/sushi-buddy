@@ -29,8 +29,7 @@ brew install --cask sushi-buddy
 
 Or download `Sushi-Buddy-macOS-arm64.zip` from the [latest release](https://github.com/NikolajMosbaek/sushi-buddy/releases/latest),
 or build it yourself with `mac/scripts/build-app.sh`, which installs to `~/Applications` and starts it.
-Until a release is notarized, macOS asks the first time: open it from System Settings → Privacy &
-Security → **Open Anyway**.
+Releases are signed with a Developer ID and notarized by Apple, so it opens like any app you download.
 
 **Windows 10/11:** download the zip for your machine (x64, or arm64 for ARM laptops) from the
 [latest release](https://github.com/NikolajMosbaek/sushi-buddy/releases/latest), unzip it anywhere and
@@ -140,9 +139,9 @@ and publishes them all as that tag's release, keeping the asset names the update
 (`Sushi-Buddy-macOS-arm64.zip`, `Sushi-Buddy-windows-{x64,arm64}.zip`). Run the workflow by hand for
 a dry run that only uploads the files as artifacts.
 
-With a Developer ID (Apple Developer Program), add the secrets listed in
-`mac/scripts/sign-and-notarize.sh` and the workflow signs and notarizes the Mac app too, which removes
-the Gatekeeper prompt.
+The workflow signs the Mac app with a Developer ID and notarizes it, using the repository secrets
+listed in `mac/scripts/sign-and-notarize.sh`. In a fork without them, the app is ad-hoc signed and
+macOS asks the first time: System Settings → Privacy & Security → **Open Anyway**.
 
 ## Handy flags
 
