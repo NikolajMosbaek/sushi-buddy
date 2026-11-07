@@ -78,8 +78,11 @@ jobs:
           $folder = "winget\manifests\n\NikolajMosbaek\SushiBuddy\$version"
           if (Get-Command winget -ErrorAction SilentlyContinue) {
             "winget $(winget --version)"
-            winget validate --manifest $folder
-            if ($LASTEXITCODE -ne 0) { throw "winget validate failed" }
+            # An older winget than the schema warns about the schema header but still checks
+            # every field; anything short of "validation succeeded" fails the run.
+            $result = winget validate --manifest $folder | Out-String
+            $result
+            if ($result -notmatch 'Manifest validation succeeded') { throw "winget validate failed" }
           } else {
             Write-Warning "winget isn't installed on this runner, so the manifests weren't validated"
           }
@@ -110,7 +113,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          (cd artifacts/winget && zip -qr ../../winget-manifests.zip .)
+          (cd artifacts/winget-manifests && zip -qr ../../winget-manifests.zip .)
           gh release create "$GITHUB_REF_NAME" --title "Sushi Buddy ${GITHUB_REF_NAME#v}" --generate-notes \
             artifacts/mac/Sushi-Buddy-macOS-arm64.zip \
             artifacts/windows/Sushi-Buddy-windows-x64.zip \
