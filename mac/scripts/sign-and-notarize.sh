@@ -31,5 +31,12 @@ codesign --verify --strict --verbose=2 "$app"
 ditto -c -k --keepParent "$app" "$work/notarize.zip"
 xcrun notarytool submit "$work/notarize.zip" \
   --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
-xcrun stapler staple "$app"
+# Stapling fetches the ticket from Apple, and that connection has dropped after notarization was
+# accepted ("The network connection was lost", error 68) in two releases running: try a few times.
+for attempt in 1 2 3 4; do
+  xcrun stapler staple "$app" && break
+  [[ $attempt -lt 4 ]] || exit 1
+  echo "Stapling failed (attempt $attempt of 4); trying again in 20 s"
+  sleep 20
+done
 spctl --assess --type execute --verbose "$app"
