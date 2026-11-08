@@ -11,12 +11,13 @@ while you're in a Focus, on a call, presenting or away.
 ## The tour
 
 The first time it starts, the sushi flies up next to its menu bar / tray icon and shows you around,
-one step at a time in its speech bubble: where to find it, the shortcut, petting, its tricks, what it
-can do on its own, the quiet rules and Claude Code. Steps for things that start off (sound,
+one step at a time in its speech bubble: where to find it, the shortcut, petting, its tricks, what
+it can do on its own, the quiet rules and Claude Code. Steps for things that start off (sound,
 Auto-motivate, break reminders, welcome back) have a checkbox to switch them on there and then;
-**Skip tour** ends it at any step. People updating from an earlier version get it once too, and
-**Settings → Take the Tour** runs it again. Like an automatic flight, the tour that starts on its
-own waits while a quiet rule holds, so it never opens in the middle of a call or a presentation.
+**Back** returns to the step before and **Skip tour** ends it at any step. People updating from an
+earlier version get it once too, and **Settings → Take the Tour** runs it again. Like an automatic
+flight, the tour that starts on its own waits while a quiet rule holds, so it never opens in the
+middle of a call or a presentation.
 
 | | macOS | Windows |
 |---|---|---|

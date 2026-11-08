@@ -515,6 +515,40 @@ private let bundledLines: Lines.Book = {
         #expect(model.step.id == "bye")
     }
 
+    @Test func backReturnsOneStepLoopsAgainOnTricksAndStopsAtTheFirst() {
+        let model = TourModel(
+            steps: Tour.steps(on: .mac, shortcut: nil),
+            spot: Tour.Spot(x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true),
+            canvas: CGSize(width: 1512, height: 982)
+        )
+        #expect(model.isFirst)
+        model.back()
+        #expect(model.index == 0)
+        for _ in 0..<5 { model.next() }
+        #expect(model.step.id == "onTheirOwn")
+        model.back()
+        #expect(model.step.id == "tricks")
+        #expect(model.loops.count == 2)
+        #expect(!model.isFirst)
+        while !model.isFirst { model.back() }
+        #expect(model.step.id == "hello")
+        model.back()
+        #expect(model.index == 0)
+    }
+
+    @Test func backDoesNothingOnceTheSushiIsLeaving() {
+        let model = TourModel(
+            steps: Tour.steps(on: .mac, shortcut: nil),
+            spot: Tour.Spot(x: 995, y: 141, bubbleOnLeft: true, bubbleBelow: true),
+            canvas: CGSize(width: 1512, height: 982)
+        )
+        model.next()
+        model.next()
+        model.finish()
+        model.back()
+        #expect(model.step.id == "shortcut")
+    }
+
     @Test func skippingLetsGoFromAnyStep() {
         let model = TourModel(
             steps: Tour.steps(on: .mac, shortcut: nil),

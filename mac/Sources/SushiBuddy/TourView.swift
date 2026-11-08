@@ -91,6 +91,9 @@ struct TourBubble: View {
                 Spacer()
                 Text("\(model.index + 1) of \(model.steps.count)")
                     .foregroundStyle(.secondary)
+                if !model.isFirst {
+                    TourButton(title: "Back", small: true) { model.back() }
+                }
                 TourButton(title: model.isLast ? "Done" : "Next", prominent: true) { model.next() }
             }
             .font(.system(size: 13, weight: .medium, design: .rounded))
@@ -149,15 +152,16 @@ struct TourBubbleShape: Shape {
 struct TourButton: View {
     let title: String
     var prominent = false
+    var small = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .font(.system(size: small ? 12 : 14, weight: small ? .semibold : .bold, design: .rounded))
                 .foregroundStyle(prominent ? .white : TourBubble.ink)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
+                .padding(.horizontal, small ? 10 : 14)
+                .padding(.vertical, small ? 5 : 7)
                 .background(
                     Pill()
                         .fill(prominent ? Color(red: 0.93, green: 0.4, blue: 0.3) : Color(white: 0.94))

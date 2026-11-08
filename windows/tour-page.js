@@ -71,6 +71,7 @@ function render() {
   copy.hidden = !step.copies
   copy.textContent = copied.has(step.id) ? 'Copied! Paste it in a terminal.' : 'Copy the install command'
   byId('skip').hidden = isLast
+  byId('back').hidden = index === 0
   byId('count').textContent = `${index + 1} of ${steps.length}`
   byId('next').textContent = isLast ? 'Done' : 'Next'
 }
@@ -82,12 +83,21 @@ function finish() {
   setTimeout(() => app.done(), (0.35 + SushiFlight.FLY_OUT + 0.3) * 1000)
 }
 
+// Coming to the tricks step, from either side, shows a loop-the-loop.
+function go(by) {
+  index += by
+  if (steps[index].showsLoop) loops.push(now() + 0.2)
+  render()
+}
+
 byId('next').addEventListener('click', () => {
   if (leaving) return
   if (index === steps.length - 1) return finish()
-  index += 1
-  if (steps[index].showsLoop) loops.push(now() + 0.2)
-  render()
+  go(1)
+})
+byId('back').addEventListener('click', () => {
+  if (leaving || index === 0) return
+  go(-1)
 })
 byId('skip').addEventListener('click', finish)
 byId('copy').addEventListener('click', async () => {

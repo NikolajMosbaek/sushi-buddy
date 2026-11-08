@@ -35,6 +35,7 @@ final class TourModel {
 
     var time: TimeInterval { Date.now.timeIntervalSince(start) }
     var step: TourStep { steps[index] }
+    var isFirst: Bool { index == 0 }
     var isLast: Bool { index == steps.count - 1 }
     var isLeaving: Bool { flight.hover != .infinity }
 
@@ -43,7 +44,17 @@ final class TourModel {
     func next() {
         guard !isLeaving else { return }
         guard !isLast else { return finish() }
-        index += 1
+        go(by: 1)
+    }
+
+    func back() {
+        guard !isLeaving, !isFirst else { return }
+        go(by: -1)
+    }
+
+    /// Coming to the tricks step, from either side, shows a loop-the-loop.
+    private func go(by offset: Int) {
+        index += offset
         if step.showsLoop { loops.append(time + 0.2) }
     }
 
