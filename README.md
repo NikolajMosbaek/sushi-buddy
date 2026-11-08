@@ -153,6 +153,12 @@ Sushi Buddy is free. If it makes your day, you can [tip the sushi on Ko-fi](http
 **Tip the Sushi…** in the menu and the button under General in Settings open the same page. A tip
 is a thank-you: it unlocks nothing, and the app never asks for one.
 
+## Privacy
+
+Sushi Buddy collects nothing: no accounts, no analytics, no tracking. What it looks at stays on your
+computer, and the only thing it does online on its own is the update check with GitHub. The details
+are in [PRIVACY.md](PRIVACY.md).
+
 ## Releasing
 
 Write the version's highlights in `Resources/whats-new.json` when you bump it; both apps' tests fail
