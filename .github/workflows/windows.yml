@@ -29,6 +29,15 @@ jobs:
           node -e "require('./system').readSystem().then(s => { console.log(s);
           if (s.focusProfile === null || s.notificationState === null || s.microphone === null) process.exit(1) })"
 
+      - name: Fetch Electron through the GitHub API
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dir="$(cygpath -m "$RUNNER_TEMP")/electron-zips"
+          bash scripts/fetch-electron.sh "$dir"
+          echo "ELECTRON_ZIP_DIR=$dir" >> "$GITHUB_ENV"
+
       - name: Package
         shell: bash
         run: npm run package
