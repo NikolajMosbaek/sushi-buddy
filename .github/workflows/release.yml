@@ -51,6 +51,21 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test
+      # The packager's own download (github.com/…/releases/download) answered 504 for hours on
+      # 8 Nov 2026 while the API served the same files, so fetch Electron through the API and
+      # check it against Electron's SHASUMS256.txt.
+      - name: Fetch Electron
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('electron/package.json').version")
+          dir="$(cygpath -m "$RUNNER_TEMP")/electron-zips"
+          gh release download "v$version" --repo electron/electron --dir "$dir" --pattern SHASUMS256.txt \
+            --pattern "electron-v$version-win32-x64.zip" --pattern "electron-v$version-win32-arm64.zip"
+          cd "$dir"
+          grep -E " \*electron-v$version-win32-(x64|arm64)\.zip$" SHASUMS256.txt | sha256sum -c
+          echo "ELECTRON_ZIP_DIR=$dir" >> "$GITHUB_ENV"
       - name: Package (with the sushi icon and the app's name on the exe)
         shell: bash
         run: npm run package

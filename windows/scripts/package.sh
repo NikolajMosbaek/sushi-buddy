@@ -22,6 +22,11 @@ if [[ $on_windows == 1 ]]; then
     --win32metadata.OriginalFilename="Sushi Buddy.exe"
   )
 fi
+# ELECTRON_ZIP_DIR: a folder of Electron's own zips to use instead of downloading them.
+electron=()
+if [[ -n ${ELECTRON_ZIP_DIR:-} ]]; then
+  electron=(--electron-zip-dir="$ELECTRON_ZIP_DIR")
+fi
 
 rm -rf dist
 for arch in x64 arm64; do
@@ -29,7 +34,7 @@ for arch in x64 arm64; do
   # packager themselves) stays out entirely.
   npx electron-packager . "Sushi Buddy" \
     --platform=win32 --arch="$arch" --app-version="$version" \
-    --out=dist --asar --overwrite ${details[@]+"${details[@]}"} \
+    --out=dist --asar --overwrite ${details[@]+"${details[@]}"} ${electron[@]+"${electron[@]}"} \
     --ignore='^/(dist|scripts|node_modules|test)(/|$)' --ignore='^/(sync-assets\.js|icon\.ico|\.gitignore)$'
   # Every UI string is the app's own, so Chromium's other languages only add size.
   find "dist/Sushi Buddy-win32-$arch/locales" -name '*.pak' ! -name 'en-US.pak' -delete
