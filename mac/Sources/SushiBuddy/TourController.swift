@@ -13,6 +13,8 @@ final class TourModel {
     let spot: Tour.Spot
     let canvas: CGSize
     let start: Date
+    /// The way out before the last step: "Skip tour", or What's New's "Close".
+    let closeTitle: String
     private(set) var flight: Flight
     private(set) var index = 0
     private(set) var pets: [TimeInterval] = []
@@ -22,10 +24,11 @@ final class TourModel {
     @ObservationIgnored var bubbleFrame: CGRect = .null
     @ObservationIgnored var onFinish: (() -> Void)?
 
-    init(steps: [TourStep], spot: Tour.Spot, canvas: CGSize, start: Date = .now) {
+    init(steps: [TourStep], spot: Tour.Spot, canvas: CGSize, closeTitle: String = "Skip tour", start: Date = .now) {
         self.steps = steps
         self.spot = spot
         self.canvas = canvas
+        self.closeTitle = closeTitle
         self.start = start
         // In from the far side, so the sushi crosses the screen to its icon, and out the near side.
         flight = Flight(
@@ -69,6 +72,10 @@ final class TourModel {
         NSPasteboard.general.setString(text, forType: .string)
         copied.insert(step.id)
     }
+
+    func open(_ url: URL) {
+        NSWorkspace.shared.open(url)
+    }
 }
 
 /// A panel that can take the bubble's clicks without making the app active, the way
@@ -97,10 +104,12 @@ final class TourController {
 
     var isRunning: Bool { running != nil }
 
-    func start(steps: [TourStep], preferences: Preferences) {
-        guard running == nil, let place = Self.whereToWait() else { return }
+    /// Whether it started: not while the bubble already shows (the tour, or What's New).
+    @discardableResult
+    func start(steps: [TourStep], preferences: Preferences, closeTitle: String = "Skip tour") -> Bool {
+        guard running == nil, let place = Self.whereToWait() else { return false }
         let frame = place.screen.frame
-        let model = TourModel(steps: steps, spot: place.spot, canvas: frame.size)
+        let model = TourModel(steps: steps, spot: place.spot, canvas: frame.size, closeTitle: closeTitle)
 
         let panel = TourPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.isOpaque = false
@@ -147,6 +156,7 @@ final class TourController {
         panel.orderFrontRegardless()
         running = (panel, model, poll, activity)
         logger.notice("tour started on \(place.screen.localizedName, privacy: .public)")
+        return true
     }
 
     /// A flight asked for during the tour: the tour sushi spins instead of a second one flying.
@@ -180,11 +190,11 @@ final class TourController {
 
     /// `--preview-tour <folder>`: draws every step to tour-<n>-<step>.png, for checking the
     /// bubbles without watching the tour.
-    static func writePreviews(to folder: URL, preferences: Preferences, steps: [TourStep]) async {
+    static func writePreviews(to folder: URL, preferences: Preferences, steps: [TourStep], closeTitle: String = "Skip tour") async {
         let canvas = CGSize(width: 1100, height: 640)
         let spot = Tour.place(anchor: CGPoint(x: 900, y: 12), in: CGRect(x: 0, y: 30, width: 1100, height: 610))
         for number in steps.indices {
-            let model = TourModel(steps: steps, spot: spot, canvas: canvas)
+            let model = TourModel(steps: steps, spot: spot, canvas: canvas, closeTitle: closeTitle)
             for _ in 0..<number { model.next() }
             let scene = TourScene(model: model, preferences: preferences, time: model.flight.flyIn + 1)
                 .background(Color(red: 0.16, green: 0.17, blue: 0.2))

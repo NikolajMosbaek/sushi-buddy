@@ -16,6 +16,7 @@ struct SushiBuddyApp: App {
             Divider()
             Button("Settings…") { appDelegate.showSettings() }
                 .keyboardShortcut(",")
+            Button("What's New in \(WhatsNew.installed)…") { appDelegate.sushi.showWhatsNew() }
             if let update = appDelegate.updates.available {
                 Button("Update to \(update.version?.description ?? update.tagName)…") {
                     appDelegate.updates.download(update)
@@ -66,6 +67,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task {
                 let steps = Tour.steps(on: .mac, shortcut: Hotkey.presets[1].label)
                 await TourController.writePreviews(to: URL(fileURLWithPath: folder), preferences: preferences, steps: steps)
+                NSApp.terminate(nil)
+            }
+            return
+        }
+        if let folder = value(after: "--preview-whats-new") {
+            Task {
+                let steps = WhatsNew.steps(WhatsNew.bundled, installed: Version(Updates.installedVersion))
+                await TourController.writePreviews(to: URL(fileURLWithPath: folder), preferences: preferences, steps: steps, closeTitle: "Close")
                 NSApp.terminate(nil)
             }
             return

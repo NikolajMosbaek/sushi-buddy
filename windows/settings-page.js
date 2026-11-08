@@ -49,6 +49,7 @@ function render(state) {
   }
   byId('launchAtLogin').checked = state.launchAtLogin
   byId('loginLabel').textContent = state.loginLabel
+  byId('version').textContent = `Sushi Buddy ${state.versionLabel}`
   byId('claudeMinMinutes').disabled = !state.settings.claudeDone
 
   const { status } = state

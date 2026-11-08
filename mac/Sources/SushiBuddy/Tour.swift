@@ -41,6 +41,8 @@ struct TourStep {
     var copies: String?
     /// The sushi does a loop-the-loop as the step opens.
     var showsLoop = false
+    /// A page the step's button opens: What's New's last step links all the release notes.
+    var link: URL?
 }
 
 /// The tour a new user gets: the sushi flies up next to its menu bar icon and, one step at a

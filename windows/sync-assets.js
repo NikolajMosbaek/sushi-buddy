@@ -5,7 +5,7 @@ const path = require('node:path')
 
 const from = path.join(__dirname, '..', 'Resources')
 const to = path.join(__dirname, 'assets')
-const files = ['body.png', 'propeller.png', 'MenuBarIcon.png', 'lines.json', 'chime.wav', 'whirr.wav']
+const files = ['body.png', 'propeller.png', 'MenuBarIcon.png', 'lines.json', 'whats-new.json', 'chime.wav', 'whirr.wav']
 
 fs.mkdirSync(to, { recursive: true })
 for (const file of files) {

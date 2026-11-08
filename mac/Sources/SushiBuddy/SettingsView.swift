@@ -94,6 +94,11 @@ private struct GeneralTab: View {
                 if let problem = sushi.hotkeyProblem { Problem(problem) }
                 Toggle("Check for updates automatically", isOn: $settings.checkForUpdates)
                 HStack {
+                    Text("Sushi Buddy \(WhatsNew.installed)")
+                    Spacer()
+                    Button("What's New") { sushi.showWhatsNew() }
+                }
+                HStack {
                     Text("Let the sushi show you around again.").foregroundStyle(.secondary)
                     Spacer()
                     Button("Take the Tour") { sushi.startTour() }

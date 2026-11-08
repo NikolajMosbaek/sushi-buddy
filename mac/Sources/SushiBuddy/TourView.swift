@@ -82,9 +82,13 @@ struct TourBubble: View {
                 }
             }
 
+            if let link = step.link {
+                TourButton(title: "All Release Notes") { model.open(link) }
+            }
+
             HStack(spacing: 14) {
                 if !model.isLast {
-                    Button("Skip tour") { model.finish() }
+                    Button(model.closeTitle) { model.finish() }
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
                 }

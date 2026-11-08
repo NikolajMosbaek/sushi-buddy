@@ -13,12 +13,14 @@ const { PORT, listen } = require('./listener')
 const { readSystem, signalsFrom } = require('./system')
 const { check: checkForUpdate } = require('./update')
 const { place: placeTour, startsOnItsOwn, steps: tourSteps } = require('./tour')
+const { RELEASE_NOTES, display: displayVersion, steps: whatsNewSteps } = require('./whats-new')
 
 const ASSETS = path.join(__dirname, 'assets')
 const OVERLAY = path.join(__dirname, 'overlay.html')
 const SETTINGS_PAGE = path.join(__dirname, 'settings.html')
 const TOUR = path.join(__dirname, 'tour.html')
 const BUNDLED_LINES = JSON.parse(fs.readFileSync(path.join(ASSETS, 'lines.json'), 'utf8'))
+const WHATS_NEW = JSON.parse(fs.readFileSync(path.join(ASSETS, 'whats-new.json'), 'utf8'))
 const INSTALL_HOOKS = 'claude plugin install sushi-buddy --marketplace NikolajMosbaek/sushi-buddy'
 // A tip is a thank-you; it unlocks nothing.
 const TIP_JAR = 'https://ko-fi.com/nikolajsim'
@@ -316,11 +318,27 @@ function tourPlace() {
   return { bounds, spot: placeTour(anchor, work) }
 }
 
-/** Shows the tour now, as Settings and --tour do. */
+/**
+ * Shows the tour now, as Settings and --tour do. It counts as seen only once it shows: while
+ * What's New holds the bubble, the tour that starts on its own keeps waiting.
+ */
 function startTour() {
+  if (!showInBubble({ shortcut: settings.hotkey === 'off' ? '' : HOTKEY_LABELS[settings.hotkey] })) return
   tourWaiting = false
   writeFile(settingsFile(), { ...readFile(settingsFile()), tourSeen: true })
-  if (tourWindow) return
+}
+
+/** What's new in this version, in the tour's bubble, as the menu and Settings ask for it. */
+function showWhatsNew() {
+  showInBubble({ steps: JSON.stringify(whatsNewSteps(WHATS_NEW, app.getVersion())), close: 'Close' })
+}
+
+/**
+ * The sushi flies up by its tray icon and goes through steps in its bubble: the tour's, or
+ * `query.steps`. False when the bubble already shows.
+ */
+function showInBubble(query) {
+  if (tourWindow) return false
   const { bounds, spot } = tourPlace()
   tourWindow = overlayWindow(bounds, 'tour-preload.js')
   // The tour still hears the mouse moving, so it can take clicks on the sushi and the bubble.
@@ -333,9 +351,10 @@ function startTour() {
     query: {
       spot: JSON.stringify(spot),
       canvas: JSON.stringify({ width: bounds.width, height: bounds.height }),
-      shortcut: settings.hotkey === 'off' ? '' : HOTKEY_LABELS[settings.hotkey],
+      ...query,
     },
   })
+  return true
 }
 
 /**
@@ -356,6 +375,7 @@ ipcMain.handle('tour:set', (_event, key, value) => {
   return settings
 })
 ipcMain.handle('tour:copy-install', () => clipboard.writeText(INSTALL_HOOKS))
+ipcMain.handle('tour:release-notes', () => shell.openExternal(RELEASE_NOTES))
 ipcMain.on('tour:done', event => BrowserWindow.fromWebContents(event.sender)?.destroy())
 
 // MARK: Settings
@@ -394,6 +414,7 @@ function state() {
     port: PORT,
     install: INSTALL_HOOKS,
     version: app.getVersion(),
+    versionLabel: displayVersion(app.getVersion()),
   }
 }
 
@@ -445,6 +466,9 @@ ipcMain.handle('settings:action', async (_event, action) => {
       break
     case 'tip':
       await shell.openExternal(TIP_JAR)
+      break
+    case 'whatsNew':
+      showWhatsNew()
       break
   }
   return state()
@@ -511,6 +535,7 @@ function refreshMenu() {
       pomodoroItem,
       { type: 'separator' },
       { label: 'Settings…', click: showSettings },
+      { label: `What's New in ${displayVersion(app.getVersion())}…`, click: showWhatsNew },
       update,
       { label: 'Tip the Sushi…', click: () => shell.openExternal(TIP_JAR) },
       { type: 'separator' },
@@ -561,7 +586,8 @@ async function preview(file, moments, flightPath, pets) {
 }
 
 // --preview-tour <folder>: renders every step of the tour to tour-<n>-<step>.png and quits.
-async function previewTour(folder) {
+// --preview-whats-new <folder>: the same for What's New, from `query.steps`.
+async function previewTour(folder, steps = tourSteps('windows', null), query = { shortcut: HOTKEY_LABELS['Control+Alt+Shift+S'] }) {
   const canvas = { width: 1100, height: 640 }
   const spot = placeTour({ x: 900, y: 660 }, { x: 0, y: 0, width: 1100, height: 600 })
   const window = new BrowserWindow({
@@ -571,13 +597,12 @@ async function previewTour(folder) {
     transparent: true,
     webPreferences: { offscreen: true, preload: path.join(__dirname, 'tour-preload.js') },
   })
-  const steps = tourSteps('windows', null)
   for (const [number, step] of steps.entries()) {
     await window.loadFile(TOUR, {
       query: {
         spot: JSON.stringify(spot),
         canvas: JSON.stringify(canvas),
-        shortcut: HOTKEY_LABELS['Control+Alt+Shift+S'],
+        ...query,
         step: String(number),
         at: String(FLY_IN + 1),
       },
@@ -663,6 +688,11 @@ if (!app.requestSingleInstanceLock()) {
     if (settingsFolder) return previewSettings(settingsFolder)
     const tourFolder = argument('--preview-tour')
     if (tourFolder) return previewTour(tourFolder)
+    const whatsNewFolder = argument('--preview-whats-new')
+    if (whatsNewFolder) {
+      const steps = whatsNewSteps(WHATS_NEW, app.getVersion())
+      return previewTour(whatsNewFolder, steps, { steps: JSON.stringify(steps), close: 'Close' })
+    }
 
     if (process.platform === 'darwin') app.dock?.hide()
     makeTray()

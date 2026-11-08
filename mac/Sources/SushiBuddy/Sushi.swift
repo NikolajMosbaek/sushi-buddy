@@ -79,12 +79,19 @@ final class Sushi {
 
     // MARK: Tour
 
-    /// Shows the tour now, as Settings and --tour do.
+    /// Shows the tour now, as Settings and --tour do. It counts as seen only once it shows: while
+    /// What's New holds the bubble, the tour that starts on its own keeps waiting.
     func startTour() {
+        let shortcut = Hotkey.presets.first { $0.id == settings.hotkey && $0.id != "off" }?.label
+        guard tour.start(steps: Tour.steps(on: .mac, shortcut: shortcut), preferences: preferences) else { return }
         tourWaiting = false
         preferences.tourSeen = true
-        let shortcut = Hotkey.presets.first { $0.id == settings.hotkey && $0.id != "off" }?.label
-        tour.start(steps: Tour.steps(on: .mac, shortcut: shortcut), preferences: preferences)
+    }
+
+    /// What's new in this version, in the tour's bubble, as the menu and Settings ask for it.
+    func showWhatsNew() {
+        let steps = WhatsNew.steps(WhatsNew.bundled, installed: Version(Updates.installedVersion))
+        tour.start(steps: steps, preferences: preferences, closeTitle: "Close")
     }
 
     /// The tour that starts on its own waits, like an automatic flight, while a quiet rule holds.

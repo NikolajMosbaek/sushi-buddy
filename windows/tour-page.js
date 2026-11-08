@@ -1,11 +1,12 @@
 // Draws the tour. main.js passes where the sushi waits (`spot`), the screen's size (`canvas`)
-// and the shortcut's label; --preview-tour adds `step` and `at` to draw one moment of one step.
+// and the shortcut's label, or other `steps` and a `close` label (What's New); --preview-tour
+// adds `step` and `at` to draw one moment of one step.
 const params = new URLSearchParams(location.search)
 const spot = JSON.parse(params.get('spot'))
 const canvas = JSON.parse(params.get('canvas'))
 const frozenAt = params.has('at') ? Number(params.get('at')) : null
 const app = window.sushiTourApp
-const steps = SushiTour.steps('windows', params.get('shortcut') || null)
+const steps = params.has('steps') ? JSON.parse(params.get('steps')) : SushiTour.steps('windows', params.get('shortcut') || null)
 
 // In from the far side, so the sushi crosses the screen to its icon, and out the near side.
 let flight = {
@@ -70,6 +71,8 @@ function render() {
   const copy = byId('copy')
   copy.hidden = !step.copies
   copy.textContent = copied.has(step.id) ? 'Copied! Paste it in a terminal.' : 'Copy the install command'
+  byId('link').hidden = !step.link
+  byId('skip').textContent = params.get('close') || 'Skip tour'
   byId('skip').hidden = isLast
   byId('back').hidden = index === 0
   byId('count').textContent = `${index + 1} of ${steps.length}`
@@ -100,6 +103,7 @@ byId('back').addEventListener('click', () => {
   go(-1)
 })
 byId('skip').addEventListener('click', finish)
+byId('link').addEventListener('click', () => app.openReleaseNotes())
 byId('copy').addEventListener('click', async () => {
   await app.copyInstall()
   copied.add(steps[index].id)

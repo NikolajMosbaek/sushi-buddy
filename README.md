@@ -141,6 +141,12 @@ Settings). When there is a newer one, the menu's **Check for Updates…** become
 which opens the download for your machine in the browser; nothing installs by itself. Homebrew users
 can `brew upgrade --cask --greedy sushi-buddy`.
 
+**What's New in 1.x…** in the menu (and **What's New** next to the version under General in Settings)
+has the sushi fly up by its icon and tell you what's new in the version you have, one highlight at a
+time in its bubble, the last with a link to all the release notes. It only shows when you ask. The
+highlights are in `Resources/whats-new.json`, one list per version; a patch without its own list
+shows its minor version's.
+
 ## Tip the sushi
 
 Sushi Buddy is free. If it makes your day, you can [tip the sushi on Ko-fi](https://ko-fi.com/nikolajsim) 🍣.
@@ -148,6 +154,9 @@ Sushi Buddy is free. If it makes your day, you can [tip the sushi on Ko-fi](http
 is a thank-you: it unlocks nothing, and the app never asks for one.
 
 ## Releasing
+
+Write the version's highlights in `Resources/whats-new.json` when you bump it; both apps' tests fail
+while the version in `mac/Info.plist` or `windows/package.json` has nothing to show.
 
 Push a tag like `v1.4.0` (it must match `windows/package.json` and `mac/Info.plist`). The
 **Release** workflow builds the Mac app on macOS and the Windows zips on Windows (with the sushi
@@ -171,6 +180,7 @@ macOS asks the first time: System Settings → Privacy & Security → **Open Any
   path; on Windows `--at 0.9,3,5.9` picks the seconds and `--pets 2.2` pets it.
 - `--preview-settings <folder>`: render the Settings window to PNGs.
 - `--preview-tour <folder>`: render every step of the tour to PNGs.
+- `--preview-whats-new <folder>`: render every step of What's New to PNGs.
 - `--launch-at-login on|off`: set it from a script (macOS also takes `status`). On Windows it is the
   `Run` registry entry for the exe where it is now, so turn it on again after moving the folder.
 - `--check-updates`: print what the update check finds.

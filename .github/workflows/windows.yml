@@ -49,7 +49,7 @@ jobs:
           $info | Format-List ProductName, FileDescription, ProductVersion
           if ($info.ProductName -ne 'Sushi Buddy') { throw "ProductName is '$($info.ProductName)'" }
 
-      - name: Render flights, Settings and the tour
+      - name: Render flights, Settings, the tour and What's New
         shell: pwsh
         run: |
           $exe = "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe"
@@ -62,6 +62,10 @@ jobs:
           Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png", "$env:GITHUB_WORKSPACE\settings.png" -ErrorAction Stop
           $steps = @(Get-ChildItem "$env:GITHUB_WORKSPACE\tour\tour-*.png")
           if ($steps.Count -ne 9) { throw "rendered $($steps.Count) tour steps, not 9" }
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\whats-new" | Out-Null
+          Start-Process -Wait -FilePath $exe -ArgumentList '--preview-whats-new', "$env:GITHUB_WORKSPACE\whats-new"
+          $new = @(Get-ChildItem "$env:GITHUB_WORKSPACE\whats-new\tour-*.png")
+          if ($new.Count -lt 1) { throw "rendered no What's New steps" }
 
       - name: The listener answers on 127.0.0.1
         shell: pwsh
@@ -107,3 +111,4 @@ jobs:
             preview-*.png
             settings.png
             tour/*.png
+            whats-new/*.png
