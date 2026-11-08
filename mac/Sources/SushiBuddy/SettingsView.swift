@@ -98,6 +98,11 @@ private struct GeneralTab: View {
                     Spacer()
                     Button("Take the Tour") { sushi.startTour() }
                 }
+                HStack {
+                    Text("Sushi Buddy is free. If it makes your day, you can tip the sushi.").foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Tip the Sushi…") { sushi.openTipJar() }
+                }
             }
             Section("Flights") {
                 Picker("Flight path", selection: $settings.flightPath) {

@@ -25,6 +25,7 @@ struct SushiBuddyApp: App {
                     Task { await appDelegate.updates.checkAndTell() }
                 }
             }
+            Button("Tip the Sushi…") { appDelegate.sushi.openTipJar() }
             Divider()
             Button("Quit Sushi Buddy") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")

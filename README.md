@@ -141,6 +141,12 @@ Settings). When there is a newer one, the menu's **Check for Updates…** become
 which opens the download for your machine in the browser; nothing installs by itself. Homebrew users
 can `brew upgrade --cask --greedy sushi-buddy`.
 
+## Tip the sushi
+
+Sushi Buddy is free. If it makes your day, you can [tip the sushi on Ko-fi](https://ko-fi.com/nikolajsim) 🍣.
+**Tip the Sushi…** in the menu and the button under General in Settings open the same page. A tip
+is a thank-you: it unlocks nothing, and the app never asks for one.
+
 ## Releasing
 
 Push a tag like `v1.4.0` (it must match `windows/package.json` and `mac/Info.plist`). The

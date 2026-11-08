@@ -199,6 +199,15 @@ final class Sushi {
         loadLines()
     }
 
+    // MARK: Tip jar
+
+    static let tipJar = "https://ko-fi.com/nikolajsim"
+
+    /// Opens the tip jar in the browser. A tip is a thank-you; it unlocks nothing.
+    func openTipJar() {
+        if let url = URL(string: Self.tipJar) { NSWorkspace.shared.open(url) }
+    }
+
     // MARK: On their own
 
     private func restartAutoMotivate() {

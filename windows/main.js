@@ -20,6 +20,8 @@ const SETTINGS_PAGE = path.join(__dirname, 'settings.html')
 const TOUR = path.join(__dirname, 'tour.html')
 const BUNDLED_LINES = JSON.parse(fs.readFileSync(path.join(ASSETS, 'lines.json'), 'utf8'))
 const INSTALL_HOOKS = 'claude plugin install sushi-buddy --marketplace NikolajMosbaek/sushi-buddy'
+// A tip is a thank-you; it unlocks nothing.
+const TIP_JAR = 'https://ko-fi.com/nikolajsim'
 const HOTKEY_LABELS = {
   off: 'Off',
   'Control+Alt+Shift+S': 'Ctrl+Alt+Shift+S',
@@ -441,6 +443,9 @@ ipcMain.handle('settings:action', async (_event, action) => {
     case 'tour':
       startTour()
       break
+    case 'tip':
+      await shell.openExternal(TIP_JAR)
+      break
   }
   return state()
 })
@@ -507,6 +512,7 @@ function refreshMenu() {
       { type: 'separator' },
       { label: 'Settings…', click: showSettings },
       update,
+      { label: 'Tip the Sushi…', click: () => shell.openExternal(TIP_JAR) },
       { type: 'separator' },
       { label: 'Quit Sushi Buddy', role: 'quit' },
     ]),
