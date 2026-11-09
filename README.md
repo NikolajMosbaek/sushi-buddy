@@ -201,6 +201,11 @@ macOS asks the first time: System Settings → Privacy & Security → **Open Any
 (lines, quiet, Pomodoro, Claude Code, the listener) are tested case for case on both sides; change
 one, change the other. `docs/make-gif.sh` remakes the GIF above.
 
+## Credits
+
+The sushi and all its graphics are by Kateryna Anisimova. The app is by Nikolaj Søgaard Simonsen.
+Both apps say so at the bottom of Settings → General.
+
 ## License
 
 MIT, art included: see [LICENSE](LICENSE).

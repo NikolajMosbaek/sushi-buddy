@@ -108,6 +108,7 @@ private struct GeneralTab: View {
                     Spacer()
                     Button("Tip the Sushi…") { sushi.openTipJar() }
                 }
+                Text("Sushi and art by Kateryna Anisimova. App by Nikolaj Søgaard Simonsen.").foregroundStyle(.secondary)
             }
             Section("Flights") {
                 Picker("Flight path", selection: $settings.flightPath) {
