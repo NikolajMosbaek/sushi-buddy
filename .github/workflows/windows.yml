@@ -12,6 +12,7 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: windows
@@ -53,22 +54,35 @@ jobs:
         shell: pwsh
         run: |
           $exe = "dist\Sushi Buddy-win32-x64\Sushi Buddy.exe"
-          Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview.png", '--at', '0.9,3,5.9'
-          Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-loop.png", '--path', 'loop', '--at', '0.9'
-          Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-pet.png", '--at', '2.5', '--pets', '2.2'
+          # Each render prints what it wrote; one that hangs (an error dialog waits for a click
+          # nobody makes) is stopped after two minutes and fails the step with what it said.
+          function Render {
+            $out = "$env:RUNNER_TEMP\render-out.txt"; $err = "$env:RUNNER_TEMP\render-err.txt"
+            "> $args"
+            $app = Start-Process -PassThru -FilePath $exe -ArgumentList $args -RedirectStandardOutput $out -RedirectStandardError $err
+            $done = $app.WaitForExit(120000)
+            Get-Content $out, $err -ErrorAction SilentlyContinue
+            if (-not $done) {
+              Get-Process 'Sushi Buddy' -ErrorAction SilentlyContinue | Stop-Process -Force
+              throw "timed out: $args"
+            }
+          }
+          Render '--preview' "$env:GITHUB_WORKSPACE\preview.png" '--at' '0.9,3,5.9'
+          Render '--preview' "$env:GITHUB_WORKSPACE\preview-loop.png" '--path' 'loop' '--at' '0.9'
+          Render '--preview' "$env:GITHUB_WORKSPACE\preview-pet.png" '--at' '2.5' '--pets' '2.2'
           foreach ($sushi in 'fall', 'jday', 'santa', 'bunny', 'metalhead') {
-            Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-$sushi.png", '--sushi', $sushi, '--at', '0.9,2.15,3.25'
+            Render '--preview' "$env:GITHUB_WORKSPACE\preview-$sushi.png" '--sushi' $sushi '--at' '0.9,2.15,3.25'
           }
           $seasonal = @(Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*-*.png" | Where-Object Name -notmatch '^preview-(loop|pet)-')
           if ($seasonal.Count -ne 15) { throw "rendered $($seasonal.Count) seasonal frames, not 15" }
-          Start-Process -Wait -FilePath $exe -ArgumentList '--preview-settings', "$env:GITHUB_WORKSPACE"
+          Render '--preview-settings' "$env:GITHUB_WORKSPACE"
           New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\tour" | Out-Null
-          Start-Process -Wait -FilePath $exe -ArgumentList '--preview-tour', "$env:GITHUB_WORKSPACE\tour"
+          Render '--preview-tour' "$env:GITHUB_WORKSPACE\tour"
           Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png", "$env:GITHUB_WORKSPACE\settings.png" -ErrorAction Stop
           $steps = @(Get-ChildItem "$env:GITHUB_WORKSPACE\tour\tour-*.png")
           if ($steps.Count -ne 9) { throw "rendered $($steps.Count) tour steps, not 9" }
           New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\whats-new" | Out-Null
-          Start-Process -Wait -FilePath $exe -ArgumentList '--preview-whats-new', "$env:GITHUB_WORKSPACE\whats-new"
+          Render '--preview-whats-new' "$env:GITHUB_WORKSPACE\whats-new"
           $new = @(Get-ChildItem "$env:GITHUB_WORKSPACE\whats-new\tour-*.png")
           if ($new.Count -lt 1) { throw "rendered no What's New steps" }
 
