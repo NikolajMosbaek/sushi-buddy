@@ -43,21 +43,21 @@ final class Updates: NSObject {
     /// The version a daily check found that nobody has looked at yet.
     private(set) var waiting: String?
 
-    /// Settings → Install updates automatically. Sparkle keeps it in the app's defaults.
-    var installsAutomatically = false {
-        didSet {
-            if installsAutomatically != oldValue { controller.updater.automaticallyDownloadsUpdates = installsAutomatically }
+    /// Settings → Install updates automatically. Sparkle keeps it, so reading it writes nothing and
+    /// Info.plist's default (on) stands until someone switches it.
+    var installsAutomatically: Bool {
+        get {
+            access(keyPath: \.installsAutomatically)
+            return controller.updater.automaticallyDownloadsUpdates
+        }
+        set {
+            withMutation(keyPath: \.installsAutomatically) { controller.updater.automaticallyDownloadsUpdates = newValue }
         }
     }
 
     @ObservationIgnored private lazy var controller = SPUStandardUpdaterController(
         startingUpdater: false, updaterDelegate: nil, userDriverDelegate: self
     )
-
-    override init() {
-        super.init()
-        installsAutomatically = controller.updater.automaticallyDownloadsUpdates
-    }
 
     /// Only on a normal launch: the command-line flags that print or draw and quit stay offline.
     func start() {
