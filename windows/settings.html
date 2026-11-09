@@ -85,6 +85,13 @@
       .muted {
         color: var(--muted);
       }
+      .credits {
+        margin: 32px 0 4px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 11.5px;
+        opacity: 0.75;
+      }
       .problem {
         color: var(--warn);
       }
@@ -137,9 +144,7 @@
       <div class="row"><label for="checkForUpdates">Check for updates automatically</label><input type="checkbox" id="checkForUpdates" data-key="checkForUpdates" /></div>
       <div class="row"><span id="version"></span><button data-action="whatsNew">What's new</button></div>
       <div class="row"><span class="muted">Let the sushi show you around again.</span><button data-action="tour">Take the tour</button></div>
-      <div class="row"><span class="muted">Sushi Buddy is free. If it makes your day, you can tip the sushi.</span><button data-action="tip">Tip the sushi</button></div>
-      <div class="row"><span class="muted">Sushi and art by Kateryna Anisimova. App by Nikolaj Søgaard Simonsen.</span></div>
-    </div>
+      <div class="row"><span class="muted">Sushi Buddy is free. If it makes your day, you can tip the sushi.</span><button data-action="tip">Tip the sushi</button></div>    </div>
 
     <h2>Flights</h2>
     <div class="card">
@@ -207,6 +212,8 @@
     </div>
     <p class="note">Run that once in a terminal: the plugin sends Claude Code's prompt, stop and permission events here. Scripts can fly the sushi too:</p>
     <p class="note"><code id="curl"></code></p>
+
+    <footer class="credits">Sushi and art by Kateryna Anisimova · App by Nikolaj Søgaard Simonsen</footer>
 
     <script src="settings-page.js"></script>
   </body>

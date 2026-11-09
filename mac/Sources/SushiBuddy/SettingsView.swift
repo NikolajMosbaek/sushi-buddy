@@ -58,24 +58,30 @@ struct SettingsView: View {
     @State var tab: SettingsTab = .general
 
     var body: some View {
-        TabView(selection: $tab) {
-            GeneralTab(settings: $preferences.settings, sushi: sushi, launchAtLogin: launchAtLogin)
-                .tabItem { Label("General", systemImage: "gearshape") }
-                .tag(SettingsTab.general)
-            AutomaticTab(settings: $preferences.settings, sushi: sushi)
-                .tabItem { Label("Automatic", systemImage: "timer") }
-                .tag(SettingsTab.automatic)
-            QuietTab(settings: $preferences.settings)
-                .tabItem { Label("Quiet", systemImage: "moon.zzz") }
-                .tag(SettingsTab.quiet)
-            LinesTab(settings: $preferences.settings, sushi: sushi)
-                .tabItem { Label("Lines", systemImage: "text.bubble") }
-                .tag(SettingsTab.lines)
-            ClaudeTab(settings: $preferences.settings, sushi: sushi)
-                .tabItem { Label("Claude Code", systemImage: "sparkles") }
-                .tag(SettingsTab.claude)
+        VStack(spacing: 0) {
+            TabView(selection: $tab) {
+                GeneralTab(settings: $preferences.settings, sushi: sushi, launchAtLogin: launchAtLogin)
+                    .tabItem { Label("General", systemImage: "gearshape") }
+                    .tag(SettingsTab.general)
+                AutomaticTab(settings: $preferences.settings, sushi: sushi)
+                    .tabItem { Label("Automatic", systemImage: "timer") }
+                    .tag(SettingsTab.automatic)
+                QuietTab(settings: $preferences.settings)
+                    .tabItem { Label("Quiet", systemImage: "moon.zzz") }
+                    .tag(SettingsTab.quiet)
+                LinesTab(settings: $preferences.settings, sushi: sushi)
+                    .tabItem { Label("Lines", systemImage: "text.bubble") }
+                    .tag(SettingsTab.lines)
+                ClaudeTab(settings: $preferences.settings, sushi: sushi)
+                    .tabItem { Label("Claude Code", systemImage: "sparkles") }
+                    .tag(SettingsTab.claude)
+            }
+            Text("Sushi and art by Kateryna Anisimova · App by Nikolaj Søgaard Simonsen")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.vertical, 8)
         }
-        .frame(width: 560, height: 520)
+        .frame(width: 560, height: 550)
     }
 }
 
@@ -108,7 +114,6 @@ private struct GeneralTab: View {
                     Spacer()
                     Button("Tip the Sushi…") { sushi.openTipJar() }
                 }
-                Text("Sushi and art by Kateryna Anisimova. App by Nikolaj Søgaard Simonsen.").foregroundStyle(.secondary)
             }
             Section("Flights") {
                 Picker("Flight path", selection: $settings.flightPath) {

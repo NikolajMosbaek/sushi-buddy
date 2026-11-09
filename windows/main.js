@@ -617,11 +617,14 @@ async function previewTour(folder, steps = tourSteps('windows', null), query = {
   app.quit()
 }
 
-// --preview-settings <folder>: renders the Settings page to settings.png and quits.
+// --preview-settings <folder>: renders the whole Settings page, down to the credits, to settings.png and quits.
 async function previewSettings(folder) {
   const window = new BrowserWindow({ ...settingsWindowOptions({ offscreen: true }), show: false, height: 2200 })
   await window.loadFile(SETTINGS_PAGE)
   await new Promise(resolve => setTimeout(resolve, 1500))
+  const height = await window.webContents.executeJavaScript('document.documentElement.scrollHeight')
+  window.setContentSize(window.getContentSize()[0], height)
+  await new Promise(resolve => setTimeout(resolve, 300))
   window.webContents.invalidate()
   const image = await window.webContents.capturePage()
   const out = path.join(folder, 'settings.png')

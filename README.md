@@ -204,7 +204,7 @@ one, change the other. `docs/make-gif.sh` remakes the GIF above.
 ## Credits
 
 The sushi and all its graphics are by Kateryna Anisimova. The app is by Nikolaj Søgaard Simonsen.
-Both apps say so at the bottom of Settings → General.
+Both apps say so in small print at the bottom of Settings.
 
 ## License
 
