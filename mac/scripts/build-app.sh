@@ -9,8 +9,11 @@ swift build -c release
 
 app="build/Sushi Buddy.app"
 rm -rf "$app"
-mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" "$app/Contents/Frameworks"
 cp .build/release/SushiBuddy "$app/Contents/MacOS/"
+# Sparkle, the updater: swift build links it from .build, so the app gets its own copy and is told where it is.
+ditto .build/release/Sparkle.framework "$app/Contents/Frameworks/Sparkle.framework"
+install_name_tool -add_rpath @executable_path/../Frameworks "$app/Contents/MacOS/SushiBuddy"
 cp ../Resources/* AppIcon.icns "$app/Contents/Resources/"
 cp Info.plist "$app/Contents/Info.plist"
 codesign --force --sign - "$app"

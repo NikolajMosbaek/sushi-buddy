@@ -99,6 +99,10 @@ private struct GeneralTab: View {
                 }
                 if let problem = sushi.hotkeyProblem { Problem(problem) }
                 Toggle("Check for updates automatically", isOn: $settings.checkForUpdates)
+                Toggle("Install updates automatically", isOn: Binding(
+                    get: { sushi.updates.installsAutomatically }, set: { sushi.updates.installsAutomatically = $0 }
+                ))
+                .disabled(!settings.checkForUpdates)
                 HStack {
                     Text("Sushi Buddy \(WhatsNew.installed)")
                     Spacer()

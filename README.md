@@ -136,10 +136,18 @@ a `Host` other than `127.0.0.1:7874` / `localhost:7874`, so a web page can't mak
 
 ## Updates
 
-Both apps check this repo's latest GitHub release quietly at launch and once a day (switch it off in
-Settings). When there is a newer one, the menu's **Check for Updates…** becomes **Update to 1.x…**,
-which opens the download for your machine in the browser; nothing installs by itself. Homebrew users
-can `brew upgrade --cask --greedy sushi-buddy`.
+Both apps look for a newer release quietly at launch and once a day (switch it off in Settings).
+
+**macOS** updates itself with [Sparkle](https://sparkle-project.org). It reads `appcast.xml` on this
+repo's latest release, and installs an update only when its EdDSA signature matches the key in
+`mac/Info.plist` and it is signed with the same Developer ID. With **Install updates automatically**
+(on by default, in Settings) it downloads in the background and installs when Sushi Buddy quits;
+without it, it asks first. An update a daily check finds turns the menu's **Check for Updates…** into
+**Update to 1.x…**. Homebrew knows the app updates itself; `brew upgrade --cask --greedy sushi-buddy`
+works too.
+
+**Windows** checks GitHub's API for the latest release; the menu's **Update to 1.x…** opens the
+download for your machine in the browser, and nothing installs by itself.
 
 **What's New in 1.x…** in the menu (and **What's New** next to the version under General in Settings)
 has the sushi fly up by its icon and tell you what's new in the version you have, one highlight at a
@@ -189,7 +197,7 @@ macOS asks the first time: System Settings → Privacy & Security → **Open Any
 - `--preview-whats-new <folder>`: render every step of What's New to PNGs.
 - `--launch-at-login on|off`: set it from a script (macOS also takes `status`). On Windows it is the
   `Run` registry entry for the exe where it is now, so turn it on again after moving the folder.
-- `--check-updates`: print what the update check finds.
+- `--check-updates` (Windows): print what the update check finds.
 
 ## Art
 

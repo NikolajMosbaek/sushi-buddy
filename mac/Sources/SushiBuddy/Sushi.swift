@@ -110,9 +110,7 @@ final class Sushi {
         if old?.listen != new.listen {
             if new.listen { listener.start() } else { listener.stop() }
         }
-        if old?.checkForUpdates != new.checkForUpdates {
-            if new.checkForUpdates { updates.startQuietChecks() } else { updates.stopQuietChecks() }
-        }
+        if old?.checkForUpdates != new.checkForUpdates { updates.setAutomaticChecks(new.checkForUpdates) }
         let automatic = new.autoMotivateSeconds > 0 || new.breakReminderMinutes > 0 || new.welcomeBack
         if automatic, new.quietDuringFocus, FocusStatus.authorization == .notDetermined {
             Task { _ = await FocusStatus.requestAccess() }

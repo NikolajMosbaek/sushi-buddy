@@ -26,5 +26,13 @@
 	<string>Sushi Buddy stays quiet while a Focus is on, so its automatic flights never interrupt you.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>FRWDI0egsmc+EFoev7E5oOn77wxX/C/f32MkHA2XYVw=</string>
 </dict>
 </plist>

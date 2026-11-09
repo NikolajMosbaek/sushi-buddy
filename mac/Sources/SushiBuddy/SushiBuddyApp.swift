@@ -17,14 +17,10 @@ struct SushiBuddyApp: App {
             Button("Settings…") { appDelegate.showSettings() }
                 .keyboardShortcut(",")
             Button("What's New in \(WhatsNew.installed)…") { appDelegate.sushi.showWhatsNew() }
-            if let update = appDelegate.updates.available {
-                Button("Update to \(update.version?.description ?? update.tagName)…") {
-                    appDelegate.updates.download(update)
-                }
+            if let version = appDelegate.updates.waiting {
+                Button("Update to \(version)…") { appDelegate.updates.checkNow() }
             } else {
-                Button("Check for Updates…") {
-                    Task { await appDelegate.updates.checkAndTell() }
-                }
+                Button("Check for Updates…") { appDelegate.updates.checkNow() }
             }
             Button("Tip the Sushi…") { appDelegate.sushi.openTipJar() }
             Divider()
@@ -103,14 +99,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
-        if arguments.contains("--check-updates") {
-            Task {
-                print("Installed \(updates.current?.description ?? "?"): \(await updates.check())")
-                NSApp.terminate(nil)
-            }
-            return
-        }
         sushi.start()
+        updates.start()
         if arguments.contains("--fly") { sushi.fly("motivate") }
         if arguments.contains("--settings") { showSettings() }
         if arguments.contains("--tour") {

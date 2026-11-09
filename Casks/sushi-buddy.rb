@@ -10,6 +10,9 @@ cask "sushi-buddy" do
   depends_on arch: :arm64
   depends_on macos: :sonoma
 
+  # From 1.7 the app updates itself (Sparkle); `brew upgrade --greedy` still works.
+  auto_updates true
+
   app "Sushi Buddy.app"
 
   uninstall quit: "com.nsscode.SushiBuddy"

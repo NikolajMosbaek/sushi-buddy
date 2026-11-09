@@ -7,6 +7,8 @@ name: Release
 #
 # Signing: when the Developer ID secrets below are set, the Mac app is signed and notarized,
 # so Gatekeeper opens it without a warning. Without them it is ad-hoc signed, as before.
+# With SPARKLE_PRIVATE_KEY set, the Mac job also writes appcast.xml, the feed the Mac app's
+# updater (Sparkle) reads from the latest release; a release must carry it then.
 on:
   push:
     tags: ['v*']
@@ -22,6 +24,7 @@ jobs:
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Tests
@@ -34,10 +37,15 @@ jobs:
         run: mac/scripts/sign-and-notarize.sh "mac/build/Sushi Buddy.app"
       - name: Zip
         run: ditto -c -k --keepParent "mac/build/Sushi Buddy.app" Sushi-Buddy-macOS-arm64.zip
+      - name: Sign the update for Sparkle and write its appcast
+        if: env.SPARKLE_PRIVATE_KEY != ''
+        run: mac/scripts/make-appcast.sh Sushi-Buddy-macOS-arm64.zip
       - uses: actions/upload-artifact@v4
         with:
           name: mac
-          path: Sushi-Buddy-macOS-arm64.zip
+          path: |
+            Sushi-Buddy-macOS-arm64.zip
+            appcast.xml
 
   windows:
     runs-on: windows-latest
@@ -121,10 +129,18 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+          SPARKLE_KEY_SET: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
         run: |
           (cd artifacts/winget-manifests && zip -qr ../../winget-manifests.zip .)
-          gh release create "$GITHUB_REF_NAME" --title "Sushi Buddy ${GITHUB_REF_NAME#v}" --generate-notes \
-            artifacts/mac/Sushi-Buddy-macOS-arm64.zip \
-            artifacts/windows/Sushi-Buddy-windows-x64.zip \
-            artifacts/windows/Sushi-Buddy-windows-arm64.zip \
-            winget-manifests.zip
+          files=(artifacts/mac/Sushi-Buddy-macOS-arm64.zip
+                 artifacts/windows/Sushi-Buddy-windows-x64.zip
+                 artifacts/windows/Sushi-Buddy-windows-arm64.zip
+                 winget-manifests.zip)
+          # Mac apps find updates through the latest release's appcast: one without it strands them.
+          if [[ -f artifacts/mac/appcast.xml ]]; then
+            files+=(artifacts/mac/appcast.xml)
+          elif [[ "$SPARKLE_KEY_SET" == "true" ]]; then
+            echo "::error::The Mac job wrote no appcast.xml"
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" --title "Sushi Buddy ${GITHUB_REF_NAME#v}" --generate-notes "${files[@]}"

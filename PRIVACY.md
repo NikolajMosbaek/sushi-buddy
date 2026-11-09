@@ -35,11 +35,13 @@ your prompt, is ignored and not stored.
 ## The internet
 
 The only thing Sushi Buddy does online on its own is the update check: at launch and once a day it
-asks GitHub's API for the latest release. GitHub sees that request like any other, including your IP
-address, under the [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+asks GitHub for the latest release (on a Mac, its update feed, and then the update itself when there
+is one). Nothing about you goes along with them. GitHub sees those requests like any
+other, including your IP address, under the [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 To switch it off: Settings → General → **Check for updates automatically**.
 
-**Tip the Sushi…**, **What's New**'s release notes and **Update to…** only open a page in your browser.
+**Tip the Sushi…** and **What's New**'s release notes only open a page in your browser, as **Update
+to…** does on Windows.
 
 ## Tips
 
@@ -52,4 +54,4 @@ to say thank you and for my own records, and never share it.
 Open an issue at [github.com/NikolajMosbaek/sushi-buddy](https://github.com/NikolajMosbaek/sushi-buddy/issues).
 Sushi Buddy is made by Nikolaj Søgaard Simonsen.
 
-Changes to this page show in its history on GitHub. Last updated 8 November 2026.
+Changes to this page show in its history on GitHub. Last updated 9 November 2026.

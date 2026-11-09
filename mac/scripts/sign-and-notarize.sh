@@ -25,8 +25,17 @@ security import "$work/certificate.p12" -k "$keychain" -P "$APPLE_CERTIFICATE_PA
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$keychain" > /dev/null
 security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
 
-codesign --force --options runtime --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$app"
-codesign --verify --strict --verbose=2 "$app"
+sign() { codesign --force --options runtime --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$@"; }
+# Sparkle comes signed by its own team, and the hardened runtime only loads code from the app's
+# team: sign its helpers innermost first, then the framework, then the app.
+sparkle="$app/Contents/Frameworks/Sparkle.framework/Versions/B"
+sign "$sparkle/XPCServices/Installer.xpc"
+sign --preserve-metadata=entitlements "$sparkle/XPCServices/Downloader.xpc"
+sign "$sparkle/Autoupdate"
+sign "$sparkle/Updater.app"
+sign "$app/Contents/Frameworks/Sparkle.framework"
+sign "$app"
+codesign --verify --strict --deep --verbose=2 "$app"
 
 ditto -c -k --keepParent "$app" "$work/notarize.zip"
 xcrun notarytool submit "$work/notarize.zip" \

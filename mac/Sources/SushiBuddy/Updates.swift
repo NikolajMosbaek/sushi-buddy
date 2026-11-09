@@ -1,5 +1,6 @@
 import AppKit
 import Observation
+import Sparkle
 
 /// A dotted version (`1.2.0`, or a tag `v1.2.0`), compared part by part with missing parts as 0.
 struct Version: Comparable, CustomStringConvertible, Sendable {
@@ -27,131 +28,70 @@ struct Version: Comparable, CustomStringConvertible, Sendable {
     }
 }
 
-/// GitHub's answer for the repo's latest release, the fields the check reads.
-struct Release: Decodable, Equatable, Sendable {
-    let tagName: String
-    let htmlURL: URL
-    let assets: [Asset]
-
-    struct Asset: Decodable, Equatable, Sendable {
-        let name: String
-        let browserDownloadURL: URL
-
-        enum CodingKeys: String, CodingKey {
-            case name
-            case browserDownloadURL = "browser_download_url"
-        }
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case tagName = "tag_name"
-        case htmlURL = "html_url"
-        case assets
-    }
-
-    var version: Version? { Version(tagName) }
-
-    /// The Mac zip, or the release page when the release has none.
-    var macDownload: URL {
-        assets.first { $0.name.localizedCaseInsensitiveContains("macos") }?.browserDownloadURL ?? htmlURL
-    }
-}
-
-enum UpdateOutcome: Equatable, Sendable {
-    case upToDate
-    case available(Release)
-    case failed(String)
-
-    init(latest: Release, current: Version?) {
-        guard let latestVersion = latest.version, let current, latestVersion > current else {
-            self = .upToDate
-            return
-        }
-        self = .available(latest)
-    }
-}
-
-/// Checks GitHub for a newer release: quietly at launch and once a day (unless switched off in Settings), where a find
-/// turns the menu's item into "Update to …", and on demand from the menu, which says
-/// what it found. The download opens in the browser; nothing installs by itself.
+/// Keeps Sushi Buddy up to date with Sparkle. At launch and once a day (unless switched off in
+/// Settings) it reads the appcast on this repo's latest GitHub release; it checks a download's
+/// EdDSA signature and Developer ID before it swaps the app. With Install updates automatically it
+/// downloads in the background and installs when Sushi Buddy quits.
+///
+/// A menu bar app is never in front, so an update a daily check finds doesn't pop up a window
+/// behind everything: the menu's Check for Updates… turns into "Update to …" until it's looked at.
 @MainActor
 @Observable
-final class Updates {
-    static let repository = "NikolajMosbaek/sushi-buddy"
-
+final class Updates: NSObject {
     static let installedVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
 
-    private(set) var available: Release?
-    let current = Version(installedVersion)
+    /// The version a daily check found that nobody has looked at yet.
+    private(set) var waiting: String?
 
-    @ObservationIgnored private var quietChecks: Task<Void, Never>?
-
-    func check() async -> UpdateOutcome {
-        do {
-            let outcome = UpdateOutcome(latest: try await latestRelease(), current: current)
-            if case .available(let release) = outcome {
-                available = release
-            } else {
-                available = nil
-            }
-            return outcome
-        } catch {
-            return .failed(error.localizedDescription)
+    /// Settings → Install updates automatically. Sparkle keeps it in the app's defaults.
+    var installsAutomatically = false {
+        didSet {
+            if installsAutomatically != oldValue { controller.updater.automaticallyDownloadsUpdates = installsAutomatically }
         }
     }
 
-    func startQuietChecks() {
-        quietChecks?.cancel()
-        quietChecks = Task {
-            while !Task.isCancelled {
-                _ = await check()
-                try? await Task.sleep(for: .seconds(24 * 60 * 60))
-            }
-        }
+    @ObservationIgnored private lazy var controller = SPUStandardUpdaterController(
+        startingUpdater: false, updaterDelegate: nil, userDriverDelegate: self
+    )
+
+    override init() {
+        super.init()
+        installsAutomatically = controller.updater.automaticallyDownloadsUpdates
     }
 
-    func stopQuietChecks() {
-        quietChecks?.cancel()
-        quietChecks = nil
+    /// Only on a normal launch: the command-line flags that print or draw and quit stay offline.
+    func start() {
+        controller.startUpdater()
     }
 
-    func checkAndTell() async {
-        let outcome = await check()
+    func setAutomaticChecks(_ on: Bool) {
+        controller.updater.automaticallyChecksForUpdates = on
+    }
+
+    /// Check for Updates… and Update to …: Sparkle's window, which says what it found.
+    func checkNow() {
         NSApp.activate()
-        let alert = NSAlert()
-        switch outcome {
-        case .upToDate:
-            alert.messageText = "Sushi Buddy is up to date"
-            alert.informativeText = "\(current?.description ?? "This") is the latest version."
-        case .available(let release):
-            alert.messageText = "Sushi Buddy \(release.version?.description ?? release.tagName) is available"
-            alert.informativeText = "You have \(current?.description ?? "an older version"). The download opens in your browser."
-            alert.addButton(withTitle: "Download")
-            alert.addButton(withTitle: "Later")
-            if alert.runModal() == .alertFirstButtonReturn { download(release) }
-            return
-        case .failed(let reason):
-            alert.alertStyle = .warning
-            alert.messageText = "Couldn't check for updates"
-            alert.informativeText = reason
-        }
-        alert.runModal()
+        controller.checkForUpdates(nil)
+    }
+}
+
+// Sparkle calls these on the main thread.
+extension Updates: @preconcurrency SPUStandardUserDriverDelegate {
+    var supportsGentleScheduledUpdateReminders: Bool { true }
+
+    func standardUserDriverShouldHandleShowingScheduledUpdate(_ update: SUAppcastItem, andInImmediateFocus immediateFocus: Bool) -> Bool {
+        immediateFocus
     }
 
-    func download(_ release: Release) {
-        NSWorkspace.shared.open(release.macDownload)
+    func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
+        if !handleShowingUpdate { waiting = update.displayVersionString }
     }
 
-    private func latestRelease() async throws -> Release {
-        guard let url = URL(string: "https://api.github.com/repos/\(Self.repository)/releases/latest") else {
-            throw URLError(.badURL)
-        }
-        var request = URLRequest(url: url)
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let status = (response as? HTTPURLResponse)?.statusCode, status == 200 else {
-            throw URLError(.badServerResponse)
-        }
-        return try JSONDecoder().decode(Release.self, from: data)
+    func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
+        waiting = nil
+    }
+
+    func standardUserDriverWillFinishUpdateSession() {
+        waiting = nil
     }
 }
