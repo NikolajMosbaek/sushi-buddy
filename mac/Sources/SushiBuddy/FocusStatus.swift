@@ -15,7 +15,9 @@ enum FocusStatus {
     }
 
     /// Asks once; macOS remembers the answer and only shows the prompt while it is undecided.
-    static func requestAccess() async -> INFocusStatusAuthorizationStatus {
+    /// Nonisolated because macOS answers on a background queue: a main-actor callback fails
+    /// Swift 6's run-time isolation check there and stops the app.
+    nonisolated static func requestAccess() async -> INFocusStatusAuthorizationStatus {
         await withCheckedContinuation { continuation in
             INFocusStatusCenter.default.requestAuthorization { continuation.resume(returning: $0) }
         }
