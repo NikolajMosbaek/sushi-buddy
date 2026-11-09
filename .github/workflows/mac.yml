@@ -21,6 +21,10 @@ jobs:
         run: |
           app="mac/build/Sushi Buddy.app/Contents/MacOS/SushiBuddy"
           "$app" --preview "$GITHUB_WORKSPACE/preview-mac.png" --path loop
+          for sushi in rainy jday santa bunny metalhead; do
+            "$app" --preview "$GITHUB_WORKSPACE/preview-mac-$sushi.png" --sushi "$sushi"
+            test -s "$GITHUB_WORKSPACE/preview-mac-$sushi.png"
+          done
           mkdir -p "$GITHUB_WORKSPACE/settings-mac" "$GITHUB_WORKSPACE/tour-mac"
           "$app" --preview-settings "$GITHUB_WORKSPACE/settings-mac"
           "$app" --preview-tour "$GITHUB_WORKSPACE/tour-mac"
@@ -30,6 +34,6 @@ jobs:
         with:
           name: mac-preview
           path: |
-            preview-mac.png
+            preview-mac*.png
             settings-mac/*.png
             tour-mac/*.png

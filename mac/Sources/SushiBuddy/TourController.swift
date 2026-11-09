@@ -24,7 +24,7 @@ final class TourModel {
     @ObservationIgnored var bubbleFrame: CGRect = .null
     @ObservationIgnored var onFinish: (() -> Void)?
 
-    init(steps: [TourStep], spot: Tour.Spot, canvas: CGSize, closeTitle: String = "Skip tour", start: Date = .now) {
+    init(steps: [TourStep], spot: Tour.Spot, canvas: CGSize, closeTitle: String = "Skip tour", look: Look = .classic, start: Date = .now) {
         self.steps = steps
         self.spot = spot
         self.canvas = canvas
@@ -32,7 +32,7 @@ final class TourModel {
         self.start = start
         // In from the far side, so the sushi crosses the screen to its icon, and out the near side.
         flight = Flight(
-            canvas: canvas, message: "", isLeftToRight: spot.bubbleOnLeft, hoverX: spot.x, altitude: spot.y, hover: .infinity
+            canvas: canvas, message: "", isLeftToRight: spot.bubbleOnLeft, hoverX: spot.x, altitude: spot.y, hover: .infinity, look: look
         )
     }
 
@@ -109,7 +109,9 @@ final class TourController {
     func start(steps: [TourStep], preferences: Preferences, closeTitle: String = "Skip tour") -> Bool {
         guard running == nil, let place = Self.whereToWait() else { return false }
         let frame = place.screen.frame
-        let model = TourModel(steps: steps, spot: place.spot, canvas: frame.size, closeTitle: closeTitle)
+        let model = TourModel(
+            steps: steps, spot: place.spot, canvas: frame.size, closeTitle: closeTitle, look: Looks.current(preferences.settings.sushi)
+        )
 
         let panel = TourPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.isOpaque = false
@@ -194,7 +196,9 @@ final class TourController {
         let canvas = CGSize(width: 1100, height: 640)
         let spot = Tour.place(anchor: CGPoint(x: 900, y: 12), in: CGRect(x: 0, y: 30, width: 1100, height: 610))
         for number in steps.indices {
-            let model = TourModel(steps: steps, spot: spot, canvas: canvas, closeTitle: closeTitle)
+            let model = TourModel(
+                steps: steps, spot: spot, canvas: canvas, closeTitle: closeTitle, look: Looks.current(preferences.settings.sushi)
+            )
             for _ in 0..<number { model.next() }
             let scene = TourScene(model: model, preferences: preferences, time: model.flight.flyIn + 1)
                 .background(Color(red: 0.16, green: 0.17, blue: 0.2))

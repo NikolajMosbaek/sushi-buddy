@@ -15,6 +15,16 @@ enum Artwork {
         return icon
     }()
 
+    private static var byFile: [String: NSImage] = [:]
+
+    /// An image from the app's resources by its file name (`sushi-santa.png`), loaded once.
+    static func image(file: String) -> NSImage {
+        if let image = byFile[file] { return image }
+        let image = image(named: (file as NSString).deletingPathExtension)
+        byFile[file] = image
+        return image
+    }
+
     private static func image(named name: String) -> NSImage {
         guard let url = Bundle.main.url(forResource: name, withExtension: "png"),
               let image = NSImage(contentsOf: url)

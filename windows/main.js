@@ -14,6 +14,7 @@ const { readSystem, signalsFrom } = require('./system')
 const { check: checkForUpdate } = require('./update')
 const { place: placeTour, startsOnItsOwn, steps: tourSteps } = require('./tour')
 const { RELEASE_NOTES, display: displayVersion, steps: whatsNewSteps } = require('./whats-new')
+const { current: currentLook, decode: decodeLooks, named: lookNamed } = require('./looks')
 
 const ASSETS = path.join(__dirname, 'assets')
 const OVERLAY = path.join(__dirname, 'overlay.html')
@@ -21,6 +22,7 @@ const SETTINGS_PAGE = path.join(__dirname, 'settings.html')
 const TOUR = path.join(__dirname, 'tour.html')
 const BUNDLED_LINES = JSON.parse(fs.readFileSync(path.join(ASSETS, 'lines.json'), 'utf8'))
 const WHATS_NEW = JSON.parse(fs.readFileSync(path.join(ASSETS, 'whats-new.json'), 'utf8'))
+const { stage: LOOK_STAGE, looks: LOOKS } = decodeLooks(JSON.parse(fs.readFileSync(path.join(ASSETS, 'sushis.json'), 'utf8')))
 const INSTALL_HOOKS = 'claude plugin install sushi-buddy --marketplace NikolajMosbaek/sushi-buddy'
 // A tip is a thank-you; it unlocks nothing.
 const TIP_JAR = 'https://ko-fi.com/nikolajsim'
@@ -75,7 +77,7 @@ function overlayWindow(bounds, preload) {
 function launch(message) {
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
   const { width, height } = display.bounds
-  const flight = randomFlight({ width, height }, message, settings.flightPath)
+  const flight = { ...randomFlight({ width, height }, message, settings.flightPath, currentLook(LOOKS, settings.sushi)), stage: LOOK_STAGE }
 
   const overlay = overlayWindow(display.bounds, 'overlay-preload.js')
   // With petting on, the overlay still hears the mouse moving, so it can take clicks while it's over the sushi.
@@ -351,6 +353,8 @@ function showInBubble(query) {
     query: {
       spot: JSON.stringify(spot),
       canvas: JSON.stringify({ width: bounds.width, height: bounds.height }),
+      look: JSON.stringify(currentLook(LOOKS, settings.sushi)),
+      stage: JSON.stringify(LOOK_STAGE),
       ...query,
     },
   })
@@ -415,6 +419,8 @@ function state() {
     install: INSTALL_HOOKS,
     version: app.getVersion(),
     versionLabel: displayVersion(app.getVersion()),
+    sushiNames: Object.fromEntries(LOOKS.map(look => [look.id, look.name])),
+    calendarSushi: currentLook(LOOKS, 'calendar').name,
   }
 }
 
@@ -559,8 +565,10 @@ function makeTray() {
 
 // MARK: Previews
 
-// --preview <file.png> [--at 0.9,3,5.9] [--path loop] [--pets 2.5]: renders moments of a flight to PNGs and quits.
-async function preview(file, moments, flightPath, pets) {
+// --preview <file.png> [--at 0.9,3,5.9] [--path loop] [--pets 2.5] [--sushi santa]: renders moments of a
+// flight to PNGs and quits.
+async function preview(file, moments, flightPath, pets, lookId) {
+  const look = lookNamed(LOOKS, lookId)
   const canvas = { width: 900, height: 420 }
   const window = new BrowserWindow({
     ...canvas,
@@ -571,7 +579,7 @@ async function preview(file, moments, flightPath, pets) {
   })
   for (const at of moments) {
     await window.loadFile(OVERLAY, {
-      query: { flight: JSON.stringify(previewFlight(canvas, flightPath)), at: String(at), pets: pets.join(',') },
+      query: { flight: JSON.stringify({ ...previewFlight(canvas, flightPath, look), stage: LOOK_STAGE }), at: String(at), pets: pets.join(',') },
     })
     await new Promise(resolve => setTimeout(resolve, 400))
     // An offscreen page that looks the same as the last one paints nothing new,
@@ -602,6 +610,8 @@ async function previewTour(folder, steps = tourSteps('windows', null), query = {
       query: {
         spot: JSON.stringify(spot),
         canvas: JSON.stringify(canvas),
+        look: JSON.stringify(currentLook(LOOKS, settings.sushi)),
+        stage: JSON.stringify(LOOK_STAGE),
         ...query,
         step: String(number),
         at: String(FLY_IN + 1),
@@ -685,7 +695,7 @@ if (!app.requestSingleInstanceLock()) {
     if (previewFile) {
       const moments = (argument('--at') ?? '0.9,3,5.9').split(',').map(Number)
       const pets = argument('--pets') ? argument('--pets').split(',').map(Number) : []
-      return preview(previewFile, moments, argument('--path') ?? 'classic', pets)
+      return preview(previewFile, moments, argument('--path') ?? 'classic', pets, argument('--sushi') ?? 'classic')
     }
     const settingsFolder = argument('--preview-settings')
     if (settingsFolder) return previewSettings(settingsFolder)

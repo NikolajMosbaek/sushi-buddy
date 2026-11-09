@@ -53,9 +53,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return arguments[index + 1]
         }
 
-        // --preview <file.png> [--path loop]: draws a flight to a PNG and quits.
+        // --preview <file.png> [--path loop] [--sushi santa]: draws a flight to a PNG and quits.
         if let file = value(after: "--preview") {
-            PreviewSheet.write(to: URL(fileURLWithPath: file), path: FlightPath(rawValue: value(after: "--path") ?? "") ?? .classic)
+            PreviewSheet.write(
+                to: URL(fileURLWithPath: file),
+                path: FlightPath(rawValue: value(after: "--path") ?? "") ?? .classic,
+                look: Looks.named(value(after: "--sushi") ?? "classic")
+            )
             NSApp.terminate(nil)
             return
         }

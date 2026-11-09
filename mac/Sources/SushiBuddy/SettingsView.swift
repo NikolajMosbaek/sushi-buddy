@@ -120,6 +120,13 @@ private struct GeneralTab: View {
                 }
             }
             Section("Flights") {
+                Picker("Sushi", selection: $settings.sushi) {
+                    Text("By the calendar (now \(Looks.current(Looks.byTheCalendar).name))").tag(Looks.byTheCalendar)
+                    Divider()
+                    ForEach(Looks.all, id: \.id) { look in
+                        Text(look.name).tag(look.id)
+                    }
+                }
                 Picker("Flight path", selection: $settings.flightPath) {
                     Text("Any, at random").tag("random")
                     Text("Straight across").tag("classic")

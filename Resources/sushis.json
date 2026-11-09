@@ -1,0 +1,114 @@
+{
+  "stage": {
+    "min": -20,
+    "size": 100
+  },
+  "sushis": [
+    {
+      "id": "classic",
+      "name": "Classic Sushi",
+      "images": {
+        "body": "body.png",
+        "propeller": "propeller.png"
+      },
+      "points": {},
+      "extent": {
+        "top": 4,
+        "left": 10,
+        "right": 51,
+        "bottom": 55
+      }
+    },
+    {
+      "id": "rainy",
+      "name": "Rainy Day Sushi",
+      "images": {
+        "body": "sushi-rainy.png"
+      },
+      "points": {},
+      "extent": {
+        "top": 6.93,
+        "left": -0.72,
+        "right": 73.69,
+        "bottom": 54.71
+      }
+    },
+    {
+      "id": "jday",
+      "name": "J-Day Sushi",
+      "images": {
+        "body": "sushi-jday.png"
+      },
+      "points": {
+        "can": {
+          "x": 51.18,
+          "y": 25.33
+        }
+      },
+      "extent": {
+        "top": 5.3,
+        "left": 6.93,
+        "right": 76.29,
+        "bottom": 64.59
+      }
+    },
+    {
+      "id": "santa",
+      "name": "Santa Sushi",
+      "images": {
+        "body": "sushi-santa.png",
+        "pompom": "sushi-santa-pompom.png"
+      },
+      "points": {
+        "pompomTop": {
+          "x": 39.14,
+          "y": 30.25
+        }
+      },
+      "extent": {
+        "top": -4.98,
+        "left": -1.06,
+        "right": 64.4,
+        "bottom": 54.77
+      }
+    },
+    {
+      "id": "bunny",
+      "name": "Easter Bunny Sushi",
+      "images": {
+        "body": "sushi-bunny.png"
+      },
+      "points": {
+        "basket": {
+          "x": 51,
+          "y": 38.33
+        }
+      },
+      "extent": {
+        "top": -4.21,
+        "left": 0.53,
+        "right": 64.99,
+        "bottom": 66.15
+      }
+    },
+    {
+      "id": "metalhead",
+      "name": "Metalhead Sushi",
+      "images": {
+        "body": "sushi-metalhead.png"
+      },
+      "points": {
+        "can": {
+          "x": 49.23,
+          "y": 32.5
+        }
+      },
+      "extent": {
+        "top": 2,
+        "left": 6.92,
+        "right": 59.08,
+        "bottom": 56.45
+      }
+    }
+  ]
+}

@@ -22,9 +22,40 @@ body {
   width: 100%;
   height: 100%;
 }
+/* A seasonal sushi's image covers the stage around the 60x60 frame; sushi-view.js places it. */
+#sushi img.stage {
+  inset: auto;
+}
 /* Spins around the stem: 29.05, 8.5 in the art's 60x60 viewBox. sushi-view.js turns it. */
 #blades {
   transform-origin: 48.42% 14.17%;
+}
+/* What goes with a seasonal sushi: leaves, snow, sparks, foam, a word. sushi-view.js places them. */
+.effect {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+.effect.emoji {
+  font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+}
+.effect.foam {
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid #8c8c8c;
+}
+.effect.word {
+  padding: 3px 8px;
+  border: 2px solid #1a1a1a;
+  border-radius: 999px;
+  background: #fff;
+  color: #1a1a1a;
+  font-family: ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  font-weight: 800;
 }
 .heart {
   position: absolute;

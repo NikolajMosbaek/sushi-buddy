@@ -24,7 +24,7 @@ struct TourScene: View {
         let corner = Tour.bubbleCorner(spot)
 
         ZStack(alignment: .topLeading) {
-            PettedSushi(pose: pose, time: time, pets: model.pets, size: Tour.sushiSize)
+            PettedSushi(look: model.flight.look, pose: pose, time: time, pets: model.pets, size: Tour.sushiSize)
 
             TourBubble(model: model, settings: $preferences.settings)
                 .opacity(pose.bubble)

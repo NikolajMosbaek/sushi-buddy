@@ -8,16 +8,17 @@ const sound = params.get('sound') ?? 'off'
 const pets = (params.get('pets') ?? '').split(',').filter(Boolean).map(Number)
 
 const bubble = document.getElementById('bubble')
-const drawSushi = SushiView.create(document)
+const drawSushi = SushiView.create(document, flight.look, flight.stage)
 const size = SushiFlight.SIZE
+const lift = SushiLooks.bubbleLift(flight.look ?? SushiLooks.CLASSIC, size)
 bubble.textContent = flight.message
 
 function draw(time) {
   const pose = SushiFlight.pose(flight, time)
-  drawSushi(pose, time, pets)
+  drawSushi(pose, time, pets, SushiFlight.effects(flight, time))
   bubble.style.opacity = String(pose.bubble)
   bubble.style.transform =
-    `translate(${pose.x}px, ${pose.y - size * 0.7}px) translate(-50%, -50%) scale(${0.6 + 0.4 * pose.bubble})`
+    `translate(${pose.x}px, ${pose.y - size * 0.7 - lift}px) translate(-50%, -50%) scale(${0.6 + 0.4 * pose.bubble})`
   return pose
 }
 

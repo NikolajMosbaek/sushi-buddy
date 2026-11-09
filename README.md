@@ -61,7 +61,8 @@ holds flights back starts **on**.
 | `breakReminderMinutes` | **Break reminders** after 30, 45, 60 or 90 minutes at the computer; five minutes away from the keyboard counts as a break | off |
 | `welcomeBack` | **Welcome back** when you return after being away | off |
 | `hotkey` | **Shortcut** for Motivate me: ⌃⌥⌘S, ⌃⌥S, ⌃⌥⌘M (Windows: Ctrl+Alt+Shift+S, Ctrl+Alt+S, Ctrl+Alt+Shift+M) or off | ⌃⌥⌘S / Ctrl+Alt+Shift+S |
-| `flightPath` | **Flight path**: straight across, loop-the-loop, bounce, zigzag, or any at random | random |
+| `sushi` | **Sushi**: which sushi flies. **By the calendar** dresses it for the season: Rainy Day Sushi all September, J-Day Sushi from J-dag (the first Friday of November) to the end of November, Santa Sushi 1–26 December, Easter Bunny Sushi from Palm Sunday to Easter Monday, Metalhead Sushi all June (Copenhell), and the Classic Sushi the rest of the year. Or pick one to fly all year. Each moves its own way: Rainy Day floats under its umbrella with leaves blowing past, J-Day brings snow and opens its can, Santa trails sparkles, the Easter Bunny hops and drops an egg, Metalhead headbangs | by the calendar |
+| `flightPath` | **Flight path**: straight across, loop-the-loop, bounce, zigzag, or any at random (the Easter Bunny always hops) | random |
 | `petting` | **Pet the sushi**: click it mid-flight for an extra spin and hearts. Only the sushi takes the click; everything around it still passes through | on |
 | `sound` | **Sound**: a chime as the bubble pops up, or a propeller whirr | off |
 | `contextLines` | **Lines for the moment**: good morning, late night, Monday, Friday | on |
@@ -191,7 +192,8 @@ macOS asks the first time: System Settings → Privacy & Security → **Open Any
 - `--tour`: show the tour at launch.
 - `--status`: print what the quiet rules see (Windows shows it in a dialog).
 - `--preview <file.png>`: render moments of a flight without showing anything. `--path loop` picks the
-  path; on Windows `--at 0.9,3,5.9` picks the seconds and `--pets 2.2` pets it.
+  path and `--sushi santa` the sushi; on Windows `--at 0.9,3,5.9` picks the seconds and `--pets 2.2`
+  pets it.
 - `--preview-settings <folder>`: render the Settings window to PNGs.
 - `--preview-tour <folder>`: render every step of the tour to PNGs.
 - `--preview-whats-new <folder>`: render every step of What's New to PNGs.
@@ -205,6 +207,15 @@ macOS asks the first time: System Settings → Privacy & Security → **Open Any
 `Art/propeller.svg` (blades only) share its 60×60 viewBox and are rendered to `Resources/body.png` and
 `Resources/propeller.png` at 1200 px; both apps spin the blades around the stem with a 3D rotation.
 `Art/make-sounds.py` synthesises `Resources/chime.wav` and `Resources/whirr.wav`.
+
+The seasonal sushis are drawn whole in `Art/seasonal/` (Kateryna's SVGs as she made them).
+`cd windows && npx electron ../Art/render-sushis.js` renders each to `Resources/sushi-<id>.png`, lined
+up with the classic sushi by its salmon and covering a 100-unit stage around the classic 60×60 frame,
+with Santa's pompom as a layer of its own and the classic's `?` left out of his hat too. It also writes
+`Resources/sushis.json`: each sushi's name, images, how high it reaches (the speech bubble rises to
+clear ears and hats) and the points its animation starts from, such as the top of a can. Both apps
+read that file; `mac/Sources/SushiBuddy/Looks.swift` and `windows/looks.js` pick the sushi for the
+day, and each one's moves and effects are in `Flight.swift` and `flight.js`.
 `windows/flight.js` is a line-for-line port of `mac/Sources/SushiBuddy/Flight.swift`, and the rules
 (lines, quiet, Pomodoro, Claude Code, the listener) are tested case for case on both sides; change
 one, change the other. `docs/make-gif.sh` remakes the GIF above.

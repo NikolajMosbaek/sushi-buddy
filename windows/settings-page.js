@@ -24,6 +24,7 @@ const LABELS = {
 
 function label(key, value, state) {
   if (key === 'hotkey') return state.hotkeyLabels[value] ?? value
+  if (key === 'sushi') return value === 'calendar' ? `By the calendar (now ${state.calendarSushi})` : state.sushiNames[value] ?? value
   const labels = LABELS[key]
   return typeof labels === 'function' ? labels(value) : labels?.[value] ?? String(value)
 }

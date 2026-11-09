@@ -151,7 +151,7 @@ final class Sushi {
             return
         }
         let text = message ?? line(for: occasion, project: project)
-        let flight = Flight.random(on: screen.frame.size, message: text, path: .named(settings.flightPath))
+        let flight = Flight.random(on: screen.frame.size, message: text, path: .named(settings.flightPath), look: Looks.current(settings.sushi))
         flights.launch(flight, on: screen, petting: settings.petting, sound: settings.sound)
     }
 

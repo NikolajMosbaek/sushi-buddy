@@ -18,6 +18,7 @@ let flight = {
   hoverX: spot.x,
   altitude: spot.y,
   hover: Infinity,
+  look: params.has('look') ? JSON.parse(params.get('look')) : SushiLooks.CLASSIC,
 }
 let index = Number(params.get('step') ?? 0)
 let leaving = false
@@ -30,7 +31,7 @@ const now = () => frozenAt ?? (performance.now() - start) / 1000
 
 const byId = id => document.getElementById(id)
 const bubble = byId('bubble')
-const drawSushi = SushiView.create(document)
+const drawSushi = SushiView.create(document, flight.look, params.has('stage') ? JSON.parse(params.get('stage')) : SushiLooks.STAGE)
 
 // The bubble's corner nearest the sushi, and its tail on that side.
 const corner = SushiTour.bubbleCorner(spot)
