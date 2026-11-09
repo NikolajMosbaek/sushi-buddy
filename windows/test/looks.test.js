@@ -23,8 +23,8 @@ test('J-dag is the first Friday of November', () => {
 
 test("the calendar picks each season's sushi from its first day to its last", () => {
   assert.equal(on(2026, 8, 31), 'classic')
-  assert.equal(on(2026, 9, 1), 'rainy')
-  assert.equal(on(2026, 9, 30), 'rainy')
+  assert.equal(on(2026, 9, 1), 'fall')
+  assert.equal(on(2026, 9, 30), 'fall')
   assert.equal(on(2026, 10, 1), 'classic')
   assert.equal(on(2026, 11, 5), 'classic')
   assert.equal(on(2026, 11, 6), 'jday')
@@ -141,8 +141,8 @@ test('each sushi brings its own effects, at their moments; the classic brings no
   // J-Day's can foams as it arrives, then stops.
   assert.ok(at('jday', FLY_IN + 0.2).some(effect => effect.glyph === 'bubble'))
   assert.ok(!at('jday', FLY_IN + 2).some(effect => effect.glyph === 'bubble' || effect.isWord))
-  // Rainy Day's leaves blow by the whole way.
-  assert.ok(times.every(time => at('rainy', time).length === 3))
+  // The Fall sushi's leaves blow by the whole way.
+  assert.ok(times.every(time => at('fall', time).length === 3))
   for (const look of bundledLooks) {
     for (const time of times) {
       for (const one of at(look.id, time)) assert.ok(one.opacity >= 0 && one.opacity <= 1, `${look.id} ${one.glyph} at ${time}s`)

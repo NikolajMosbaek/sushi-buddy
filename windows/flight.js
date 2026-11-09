@@ -85,7 +85,7 @@
   }
 
   /**
-   * Where the sushi is at `time`. The seasonal ones move their own way: Rainy Day floats slowly,
+   * Where the sushi is at `time`. The seasonal ones move their own way: the Fall sushi floats slowly,
    * swaying under its umbrella; the Easter Bunny hops instead of following the path; Metalhead
    * headbangs while it hovers; Santa's pompom swings behind it.
    */
@@ -96,7 +96,7 @@
     const endX = flight.isLeftToRight ? flight.width + SIZE : -SIZE
     let bob = Math.sin(time * 2 * Math.PI * 0.9) * 14
     let wobble = Math.sin(time * 2 * Math.PI * 0.6) * 3
-    if (look === 'rainy') {
+    if (look === 'fall') {
       bob = Math.sin(time * 2 * Math.PI * 0.5) * 18
       wobble = Math.sin(time * 2 * Math.PI * 0.5 + Math.PI / 2) * 7
     }
@@ -178,7 +178,7 @@
   const effect = (glyph, x, y, size, more = {}) => ({ glyph, x, y, size, rotation: 0, opacity: 1, isInFront: true, isWord: false, ...more })
 
   /**
-   * What goes with the sushi at `time`: Rainy Day's leaves blowing past, J-Day's snow and the foam
+   * What goes with the sushi at `time`: the Fall sushi's leaves blowing past, J-Day's snow and the foam
    * from its can as it arrives, Santa's trail of sparkles, the egg the Easter Bunny drops, and
    * Metalhead's trail of flames and its horns while it headbangs. The classic has none. Each is an
    * emoji, a word in a little white label (`isWord`), or a bubble of foam (glyph 'bubble'),
@@ -192,7 +192,7 @@
     const fraction = value => value - Math.floor(value)
 
     switch (lookOf(flight).id) {
-      case 'rainy':
+      case 'fall':
         return [0, 1, 2].map(leaf => {
           const q = fraction(time / 2.6 + leaf / 3)
           return effect(

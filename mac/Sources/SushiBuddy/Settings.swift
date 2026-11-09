@@ -35,7 +35,7 @@ struct Settings: Equatable, Sendable {
         static let breakReminderMinutes = [0, 30, 45, 60, 90]
         static let awayMinutes = [5, 10, 15, 30]
         static let flightPath = ["random", "classic", "loop", "bounce", "zigzag"]
-        static let sushi = ["calendar", "classic", "rainy", "jday", "santa", "bunny", "metalhead"]
+        static let sushi = ["calendar", "classic", "fall", "jday", "santa", "bunny", "metalhead"]
         static let sound = ["off", "chime", "whirr"]
         static let hotkey = ["off", "control+option+command+s", "control+option+s", "control+option+command+m"]
         static let claudeMinMinutes = [0, 1, 2, 5, 10]

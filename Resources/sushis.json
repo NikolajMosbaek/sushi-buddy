@@ -20,10 +20,10 @@
       }
     },
     {
-      "id": "rainy",
-      "name": "Rainy Day Sushi",
+      "id": "fall",
+      "name": "Fall Sushi",
       "images": {
-        "body": "sushi-rainy.png"
+        "body": "sushi-fall.png"
       },
       "points": {},
       "extent": {

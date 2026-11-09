@@ -44,7 +44,7 @@
   }
 
   /**
-   * Which sushi the calendar picks on a day: Rainy Day all September, J-Day from J-dag (the first
+   * Which sushi the calendar picks on a day: Fall all September, J-Day from J-dag (the first
    * Friday of November) to the end of November, Santa 1–26 December, the Easter Bunny from Palm
    * Sunday to Easter Monday, Metalhead all June (Copenhell), and the classic the rest of the year.
    */
@@ -53,7 +53,7 @@
       case 6:
         return 'metalhead'
       case 9:
-        return 'rainy'
+        return 'fall'
       case 11:
         return day >= firstFridayOfNovember(year) ? 'jday' : 'classic'
       case 12:

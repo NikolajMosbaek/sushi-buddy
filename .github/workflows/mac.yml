@@ -21,7 +21,7 @@ jobs:
         run: |
           app="mac/build/Sushi Buddy.app/Contents/MacOS/SushiBuddy"
           "$app" --preview "$GITHUB_WORKSPACE/preview-mac.png" --path loop
-          for sushi in rainy jday santa bunny metalhead; do
+          for sushi in fall jday santa bunny metalhead; do
             "$app" --preview "$GITHUB_WORKSPACE/preview-mac-$sushi.png" --sushi "$sushi"
             test -s "$GITHUB_WORKSPACE/preview-mac-$sushi.png"
           done

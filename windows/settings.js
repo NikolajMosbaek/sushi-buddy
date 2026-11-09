@@ -11,7 +11,7 @@ const CHOICES = {
   breakReminderMinutes: [0, 30, 45, 60, 90],
   awayMinutes: [5, 10, 15, 30],
   flightPath: ['random', 'classic', 'loop', 'bounce', 'zigzag'],
-  sushi: ['calendar', 'classic', 'rainy', 'jday', 'santa', 'bunny', 'metalhead'],
+  sushi: ['calendar', 'classic', 'fall', 'jday', 'santa', 'bunny', 'metalhead'],
   sound: ['off', 'chime', 'whirr'],
   hotkey: ['off', 'Control+Alt+Shift+S', 'Control+Alt+S', 'Control+Alt+Shift+M'],
   claudeMinMinutes: [0, 1, 2, 5, 10],

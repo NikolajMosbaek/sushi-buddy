@@ -28,7 +28,7 @@ const PIXELS = 1200
 // by their tag and a test on their box, in the SVG's own units.
 const sushis = [
   { id: 'classic', name: 'Classic Sushi' },
-  { id: 'rainy', name: 'Rainy Day Sushi', file: 'rainy.svg' },
+  { id: 'fall', name: 'Fall Sushi', file: 'fall.svg' },
   {
     id: 'jday',
     name: 'J-Day Sushi',

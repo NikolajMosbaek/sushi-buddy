@@ -30,8 +30,8 @@ struct LooksTests {
 
     @Test func theCalendarPicksEachSeasonsSushiFromItsFirstDayToItsLast() {
         #expect(on(2026, 8, 31) == "classic")
-        #expect(on(2026, 9, 1) == "rainy")
-        #expect(on(2026, 9, 30) == "rainy")
+        #expect(on(2026, 9, 1) == "fall")
+        #expect(on(2026, 9, 30) == "fall")
         #expect(on(2026, 10, 1) == "classic")
         #expect(on(2026, 11, 5) == "classic")
         #expect(on(2026, 11, 6) == "jday")
@@ -153,8 +153,8 @@ struct LookMotionTests {
         // J-Day's can foams as it arrives, then stops.
         #expect(at("jday", flyIn + 0.2).contains { $0.glyph == "bubble" })
         #expect(!at("jday", flyIn + 2).contains { $0.glyph == "bubble" || $0.isWord })
-        // Rainy Day's leaves blow by the whole way.
-        #expect(times.allSatisfy { at("rainy", $0).count == 3 })
+        // The Fall sushi's leaves blow by the whole way.
+        #expect(times.allSatisfy { at("fall", $0).count == 3 })
         for look in looks {
             for time in times {
                 for effect in at(look.id, time) {

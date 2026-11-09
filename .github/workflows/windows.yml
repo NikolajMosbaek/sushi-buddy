@@ -56,7 +56,7 @@ jobs:
           Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview.png", '--at', '0.9,3,5.9'
           Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-loop.png", '--path', 'loop', '--at', '0.9'
           Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-pet.png", '--at', '2.5', '--pets', '2.2'
-          foreach ($sushi in 'rainy', 'jday', 'santa', 'bunny', 'metalhead') {
+          foreach ($sushi in 'fall', 'jday', 'santa', 'bunny', 'metalhead') {
             Start-Process -Wait -FilePath $exe -ArgumentList '--preview', "$env:GITHUB_WORKSPACE\preview-$sushi.png", '--sushi', $sushi, '--at', '0.9,2.15,3.25'
           }
           $seasonal = @(Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*-*.png" | Where-Object Name -notmatch '^preview-(loop|pet)-')

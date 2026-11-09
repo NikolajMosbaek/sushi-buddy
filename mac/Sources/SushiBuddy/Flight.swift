@@ -88,7 +88,7 @@ struct Flight {
         var pompom: Double = 0
     }
 
-    /// Where the sushi is at `time`. The seasonal ones move their own way: Rainy Day floats slowly,
+    /// Where the sushi is at `time`. The seasonal ones move their own way: the Fall sushi floats slowly,
     /// swaying under its umbrella; the Easter Bunny hops instead of following the path; Metalhead
     /// headbangs while it hovers; Santa's pompom swings behind it.
     func pose(at time: TimeInterval) -> Pose {
@@ -97,7 +97,7 @@ struct Flight {
         let endX = isLeftToRight ? canvas.width + size : -size
         var bob = sin(time * 2 * .pi * 0.9) * 14
         var wobble = sin(time * 2 * .pi * 0.6) * 3
-        if look.id == "rainy" {
+        if look.id == "fall" {
             bob = sin(time * 2 * .pi * 0.5) * 18
             wobble = sin(time * 2 * .pi * 0.5 + .pi / 2) * 7
         }
@@ -176,7 +176,7 @@ struct Flight {
         var isWord = false
     }
 
-    /// What goes with the sushi at `time`: Rainy Day's leaves blowing past, J-Day's snow and the foam
+    /// What goes with the sushi at `time`: the Fall sushi's leaves blowing past, J-Day's snow and the foam
     /// from its can as it arrives, Santa's trail of sparkles, the egg the Easter Bunny drops, and
     /// Metalhead's trail of flames and its horns while it headbangs. The classic has none.
     func effects(at time: TimeInterval) -> [Effect] {
@@ -187,7 +187,7 @@ struct Flight {
         let fraction = { (value: Double) in value - floor(value) }
 
         switch look.id {
-        case "rainy":
+        case "fall":
             return (0..<3).map { leaf in
                 let q = fraction(time / 2.6 + Double(leaf) / 3)
                 return Effect(
