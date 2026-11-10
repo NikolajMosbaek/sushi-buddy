@@ -184,6 +184,22 @@ The workflow signs the Mac app with a Developer ID and notarizes it, using the r
 listed in `mac/scripts/sign-and-notarize.sh`. In a fork without them, the app is ad-hoc signed and
 macOS asks the first time: System Settings → Privacy & Security → **Open Anyway**.
 
+## Website
+
+[sushibuddy.nsscode.com](https://sushibuddy.nsscode.com/) is `site/`, put together by `site/build.sh`
+with the apps' own `windows/looks.js`, `flight.js`, `sushi-view.js`, `sushi.css` and the art in
+`Resources/`, so the sushi on the page flies the way it does on a desktop. The **Website** workflow
+deploys it to GitHub Pages when any of those change on `main`, after every published release (the page
+shows the latest version; the download buttons point at `releases/latest`), and by hand. To look at it
+locally:
+
+```sh
+VERSION=dev site/build.sh /tmp/sushi-site && python3 -m http.server --directory /tmp/sushi-site 8080
+```
+
+The domain is a CNAME from `sushibuddy` to `nikolajmosbaek.github.io` in nsscode.com's DNS (Simply.com),
+and the custom domain in the repository's Pages settings.
+
 ## Handy flags
 
 - `--fly`: fly once at launch. On Windows a second launch with `--fly` reaches the running app, so a

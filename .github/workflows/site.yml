@@ -1,0 +1,55 @@
+name: Website
+
+# Puts the website together (site/build.sh) and deploys it to GitHub Pages, served at
+# sushibuddy.nsscode.com: on a push that changes the site or the sushi it borrows from the apps,
+# after every published release (so its version is the latest), and by hand.
+on:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - windows/looks.js
+      - windows/flight.js
+      - windows/sushi-view.js
+      - windows/sushi.css
+      - Resources/**
+      - .github/workflows/site.yml
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # A Release run publishes only for a pushed tag; a dry run (by hand) or a failed one changes nothing here.
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Put the site together
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: sh site/build.sh _site
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sushi Buddy</title>
+    <meta
+      name="description"
+      content="A sushi in a propeller hat flies across your screen and cheers you on. A free menu bar and tray app for Mac and Windows."
+    />
+    <meta name="theme-color" content="#f3eee7" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sushibuddy.nsscode.com/" />
+    <meta property="og:title" content="Sushi Buddy" />
+    <meta
+      property="og:description"
+      content="A sushi in a propeller hat flies across your screen and cheers you on. Free for Mac and Windows."
+    />
+    <meta property="og:image" content="https://sushibuddy.nsscode.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="icon.png" />
+    <link rel="apple-touch-icon" href="icon.png" />
+    <link rel="stylesheet" href="sushi.css?v={{REV}}" />
+    <link rel="stylesheet" href="site.css?v={{REV}}" />
+  </head>
+  <body>
+    <header class="wrap top">
+      <a class="brand" href="./"><img src="icon.png" alt="" width="36" height="36" />Sushi Buddy</a>
+      <nav>
+        <a href="#sushis">Sushis</a>
+        <a href="#claude-code">Claude Code</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/NikolajMosbaek/sushi-buddy">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="wrap hero">
+        <h1>A sushi that cheers you&nbsp;on.</h1>
+        <p class="lead">
+          A tiny menu bar and tray app: a sushi in a propeller hat flies across your screen, says something nice and
+          flies off. When you ask, or now and then on its own.
+        </p>
+        <div class="downloads">
+          <a class="button primary" href="https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/Sushi-Buddy-macOS-arm64.zip">
+            Download for Mac
+          </a>
+          <a class="button" href="https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/Sushi-Buddy-windows-x64.zip">
+            Download for Windows
+          </a>
+        </div>
+        <p class="fine">
+          Free and open source · Version {{VERSION}} · macOS 14 or later on Apple Silicon · Windows 10 and 11
+          (<a href="https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/Sushi-Buddy-windows-arm64.zip">ARM</a>)
+          · <a href="#install">Homebrew and more</a>
+        </p>
+
+        <div class="sky" id="sky" data-look="classic" aria-label="A sushi flying across the sky. Click it to pet it.">
+          <div id="stage">
+            <div id="effects-back"></div>
+            <div id="sushi">
+              <img src="assets/body.png" alt="" />
+              <img id="blades" src="assets/propeller.png" alt="" />
+            </div>
+            <div id="effects-front"></div>
+            <div id="hearts"></div>
+            <div id="bubble"></div>
+          </div>
+        </div>
+        <div class="sky-bar">
+          <button class="button small primary" id="motivate" type="button">Motivate me 🍣</button>
+          <p id="caption">Click the sushi as it flies by to pet it.</p>
+        </div>
+      </section>
+
+      <section class="wrap" id="features">
+        <h2>What it does</h2>
+        <div class="features">
+          <article>
+            <span class="glyph">🍣</span>
+            <h3>Motivate me</h3>
+            <p>From the menu bar or tray, or with a shortcut: ⌃⌥⌘S on a Mac, Ctrl+Alt+Shift+S on Windows.</p>
+          </article>
+          <article>
+            <span class="glyph">⏰</span>
+            <h3>Now and then</h3>
+            <p>Every 15 minutes to every 4 hours, if you like. Everything it does on its own starts off.</p>
+          </article>
+          <article>
+            <span class="glyph">☕️</span>
+            <h3>Breaks</h3>
+            <p>A nudge after 30 to 90 minutes at the computer, a welcome back after time away, and a Pomodoro timer.</p>
+          </article>
+          <article>
+            <span class="glyph">🤫</span>
+            <h3>Knows when to keep quiet</h3>
+            <p>It holds off during a Focus, a call, a presentation, or while you're away.</p>
+          </article>
+          <article>
+            <span class="glyph">❤️</span>
+            <h3>Pet it</h3>
+            <p>Click it mid-flight for an extra spin and hearts. Everything around it still takes your clicks.</p>
+          </article>
+          <article>
+            <span class="glyph">✍️</span>
+            <h3>Your own lines</h3>
+            <p>Good morning, Friday, a streak of days. Change any of it to what you'd like to hear.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="wrap" id="sushis">
+        <h2>It dresses for the season</h2>
+        <p class="section-lead">
+          Kateryna Anisimova drew five seasonal sushis, and each one moves its own way. By the calendar, the
+          sushi changes by itself. Or pick one in Settings to fly all year. Click one to see it fly.
+        </p>
+        <div class="looks">
+          <button class="look" type="button" data-look="classic">
+            <span class="art classic"><img src="assets/body.png" alt="" loading="lazy" /><img src="assets/propeller.png" alt="" loading="lazy" /></span>
+            <span class="now" hidden>On now</span>
+            <strong>Classic Sushi</strong>
+            <span class="when">The rest of the year</span>
+            <span class="move">Spins its propeller and loops the loop.</span>
+          </button>
+          <button class="look" type="button" data-look="fall">
+            <span class="art"><img src="assets/sushi-fall.png" alt="" loading="lazy" /></span>
+            <span class="now" hidden>On now</span>
+            <strong>Fall Sushi</strong>
+            <span class="when">September</span>
+            <span class="move">Floats under its umbrella, leaves blowing past.</span>
+          </button>
+          <button class="look" type="button" data-look="jday">
+            <span class="art"><img src="assets/sushi-jday.png" alt="" loading="lazy" /></span>
+            <span class="now" hidden>On now</span>
+            <strong>J-Day Sushi</strong>
+            <span class="when">From J-dag to the end of November</span>
+            <span class="move">Brings the snow and cracks a can.</span>
+          </button>
+          <button class="look" type="button" data-look="santa">
+            <span class="art"><img src="assets/sushi-santa.png" alt="" loading="lazy" /><img src="assets/sushi-santa-pompom.png" alt="" loading="lazy" /></span>
+            <span class="now" hidden>On now</span>
+            <strong>Santa Sushi</strong>
+            <span class="when">1–26 December</span>
+            <span class="move">Trails sparkles, pompom swinging.</span>
+          </button>
+          <button class="look" type="button" data-look="bunny">
+            <span class="art"><img src="assets/sushi-bunny.png" alt="" loading="lazy" /></span>
+            <span class="now" hidden>On now</span>
+            <strong>Easter Bunny Sushi</strong>
+            <span class="when">Palm Sunday to Easter Monday</span>
+            <span class="move">Hops across and drops an egg.</span>
+          </button>
+          <button class="look" type="button" data-look="metalhead">
+            <span class="art"><img src="assets/sushi-metalhead.png" alt="" loading="lazy" /></span>
+            <span class="now" hidden>On now</span>
+            <strong>Metalhead Sushi</strong>
+            <span class="when">June</span>
+            <span class="move">Trails flames and headbangs. Pet it for 🤘.</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="wrap" id="claude-code">
+        <h2>Cheers when Claude Code is done</h2>
+        <p class="section-lead">
+          With the Claude Code plugin, the sushi flies when a long turn finishes ("Claude's done in my-app!") and
+          when Claude needs your permission. Install it once, in a terminal:
+        </p>
+        <div class="code">
+          <pre><code>claude plugin install sushi-buddy --marketplace NikolajMosbaek/sushi-buddy</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <p class="section-lead">Your own scripts can fly it too:</p>
+        <div class="code">
+          <pre><code>curl -d 'Deployed! 🚀' http://127.0.0.1:7874/fly</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <p class="fine">Both only talk to Sushi Buddy on your own computer. Nothing leaves it.</p>
+      </section>
+
+      <section class="wrap" id="install">
+        <h2>Install</h2>
+        <div class="platforms">
+          <article>
+            <h3>Mac</h3>
+            <p>macOS 14 or later, Apple Silicon. With Homebrew:</p>
+            <div class="code">
+              <pre><code>brew tap nikolajmosbaek/sushi-buddy https://github.com/NikolajMosbaek/sushi-buddy
+brew trust nikolajmosbaek/sushi-buddy
+brew install --cask sushi-buddy</code></pre>
+              <button class="copy" type="button">Copy</button>
+            </div>
+            <p>
+              Or <a href="https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/Sushi-Buddy-macOS-arm64.zip">download the zip</a>,
+              unzip it and move Sushi Buddy to Applications. It's signed and notarized by Apple, so it opens like any
+              app you download, and it keeps itself up to date.
+            </p>
+          </article>
+          <article>
+            <h3>Windows</h3>
+            <p>Windows 10 or 11. Download the zip for your PC:</p>
+            <div class="downloads">
+              <a class="button small" href="https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/Sushi-Buddy-windows-x64.zip">Windows (x64)</a>
+              <a class="button small" href="https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/Sushi-Buddy-windows-arm64.zip">Windows on ARM</a>
+            </div>
+            <p>
+              Unzip it anywhere and run <strong>Sushi Buddy.exe</strong>. It isn't code-signed, so the first time
+              Windows says "Windows protected your PC": choose <strong>More info</strong>, then
+              <strong>Run anyway</strong>. Then find the sushi in the tray.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="wrap split" id="privacy">
+        <article>
+          <h2>Private</h2>
+          <p>
+            No accounts, no analytics, no tracking. What it looks at, such as whether you're on a call, stays on
+            your computer. The only thing it does online is look for updates on GitHub.
+            <a href="https://github.com/NikolajMosbaek/sushi-buddy/blob/main/PRIVACY.md">Privacy details</a>
+          </p>
+        </article>
+        <article>
+          <h2>Free</h2>
+          <p>
+            Sushi Buddy is free and open source. If it makes your day, you can
+            <a href="https://ko-fi.com/nikolajsim">tip the sushi on Ko-fi</a> 🍣. A tip unlocks nothing, and the
+            app never asks for one.
+          </p>
+        </article>
+      </section>
+    </main>
+
+    <footer class="wrap bottom">
+      <p>Sushi and art by Kateryna Anisimova · App by Nikolaj Søgaard Simonsen</p>
+      <p>
+        <a href="https://github.com/NikolajMosbaek/sushi-buddy">Source on GitHub</a> ·
+        <a href="https://github.com/NikolajMosbaek/sushi-buddy/blob/main/LICENSE">MIT License</a> ·
+        <a href="https://nsscode.com/">nsscode.com</a>
+      </p>
+    </footer>
+
+    <script src="looks.js?v={{REV}}"></script>
+    <script src="flight.js?v={{REV}}"></script>
+    <script src="sushi-view.js?v={{REV}}"></script>
+    <script src="site.js?v={{REV}}"></script>
+  </body>
+</html>
