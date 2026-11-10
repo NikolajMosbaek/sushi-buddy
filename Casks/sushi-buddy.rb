@@ -5,7 +5,7 @@ cask "sushi-buddy" do
   url "https://github.com/NikolajMosbaek/sushi-buddy/releases/latest/download/Sushi-Buddy-macOS-arm64.zip"
   name "Sushi Buddy"
   desc "Propeller-hat sushi that flies across the screen to cheer you on"
-  homepage "https://github.com/NikolajMosbaek/sushi-buddy"
+  homepage "https://sushibuddy.nsscode.com/"
 
   depends_on arch: :arm64
   depends_on macos: :sonoma

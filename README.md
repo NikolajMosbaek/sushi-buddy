@@ -8,6 +8,8 @@ on a timer, when a break is due, when you come back, when a Pomodoro ends, or wh
 finishes a long turn. Everything it does on its own is a switch in **Settings**, and it holds off
 while you're in a Focus, on a call, presenting or away.
 
+**Website:** [sushibuddy.nsscode.com](https://sushibuddy.nsscode.com/)
+
 ## The tour
 
 The first time it starts, the sushi flies up next to its menu bar / tray icon and shows you around,
