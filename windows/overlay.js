@@ -49,7 +49,9 @@ window.addEventListener('load', () => {
       mouse = { x: event.clientX, y: event.clientY }
     })
     window.addEventListener('mousedown', () => {
-      if (over) pets.push(now())
+      if (!over) return
+      pets.push(now())
+      window.sushiOverlay?.petted()
     })
   }
 

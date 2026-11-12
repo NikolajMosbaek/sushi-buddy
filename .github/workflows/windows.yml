@@ -80,7 +80,7 @@ jobs:
           Render '--preview-tour' "$env:GITHUB_WORKSPACE\tour"
           Get-ChildItem "$env:GITHUB_WORKSPACE\preview-*.png", "$env:GITHUB_WORKSPACE\settings.png" -ErrorAction Stop
           $steps = @(Get-ChildItem "$env:GITHUB_WORKSPACE\tour\tour-*.png")
-          if ($steps.Count -ne 9) { throw "rendered $($steps.Count) tour steps, not 9" }
+          if ($steps.Count -ne 10) { throw "rendered $($steps.Count) tour steps, not 10" }
           New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\whats-new" | Out-Null
           Render '--preview-whats-new' "$env:GITHUB_WORKSPACE\whats-new"
           $new = @(Get-ChildItem "$env:GITHUB_WORKSPACE\whats-new\tour-*.png")

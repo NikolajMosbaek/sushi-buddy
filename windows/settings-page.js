@@ -94,6 +94,14 @@ for (const button of document.querySelectorAll('[data-action]')) {
   button.addEventListener('click', async () => render(await api.act(button.dataset.action)))
 }
 
+// The usage summary exactly as it would go now. The ID is random, made when you turn sharing on
+// and forgotten when you turn it off, and only its hash leaves your PC.
+byId('showUsage').addEventListener('click', async () => {
+  const preview = byId('usagePreview')
+  if (preview.hidden) byId('usageText').textContent = await api.usagePreview()
+  preview.hidden = !preview.hidden
+})
+
 async function refreshSignals() {
   byId('signals').textContent = (await api.signals()).join('\n')
 }

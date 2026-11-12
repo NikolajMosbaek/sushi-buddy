@@ -29,6 +29,8 @@ struct Settings: Equatable, Sendable {
     var pomodoroBreakMinutes = 5
     var pomodoroLongBreaks = true
     var checkForUpdates = true
+    /// Only ever on because you turned it on.
+    var shareUsage = false
 
     enum Choices {
         static let autoMotivateSeconds = [0, 900, 1800, 3600, 7200, 14400]
@@ -82,6 +84,7 @@ struct Settings: Equatable, Sendable {
         pomodoroBreakMinutes = int("pomodoroBreakMinutes", Choices.pomodoroBreakMinutes, defaults.pomodoroBreakMinutes)
         pomodoroLongBreaks = flag("pomodoroLongBreaks", defaults.pomodoroLongBreaks)
         checkForUpdates = flag("checkForUpdates", defaults.checkForUpdates)
+        shareUsage = flag("shareUsage", defaults.shareUsage)
     }
 
     /// Every setting by its key, as stored.
@@ -110,6 +113,7 @@ struct Settings: Equatable, Sendable {
             "pomodoroBreakMinutes": pomodoroBreakMinutes,
             "pomodoroLongBreaks": pomodoroLongBreaks,
             "checkForUpdates": checkForUpdates,
+            "shareUsage": shareUsage,
         ]
     }
 }
@@ -145,5 +149,23 @@ final class Preferences {
     var tourSeen: Bool {
         get { defaults.bool(forKey: "tourSeen") }
         set { defaults.set(newValue, forKey: "tourSeen") }
+    }
+
+    /// The usage summary's ID and counts while sharing is on, nil while it's off; bookkeeping.
+    var usage: Usage.Record? {
+        get { defaults.data(forKey: "usage").flatMap { try? JSONDecoder().decode(Usage.Record.self, from: $0) } }
+        set { defaults.set(newValue.flatMap { try? JSONEncoder().encode($0) }, forKey: "usage") }
+    }
+
+    /// Whether the tour or What's New has shown the step that asks to share usage; bookkeeping.
+    var usageAsked: Bool {
+        get { defaults.bool(forKey: "usageAsked") }
+        set { defaults.set(newValue, forKey: "usageAsked") }
+    }
+
+    /// When the app last started, cleared when it quits: still set at launch means it didn't quit.
+    var runningSince: TimeInterval? {
+        get { defaults.object(forKey: "runningSince") as? TimeInterval }
+        set { defaults.set(newValue, forKey: "runningSince") }
     }
 }

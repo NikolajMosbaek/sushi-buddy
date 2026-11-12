@@ -35,18 +35,22 @@ enum WhatsNew {
         return parts.map(String.init).joined(separator: ".")
     }
 
-    /// The bubble's steps: one per line, the last linking all the release notes.
-    static func steps(_ notes: Notes, installed: Version?) -> [TourStep] {
-        guard let installed, let picked = pick(notes, installed: installed) else {
-            return [TourStep(id: "none", text: "I don't have notes for this version. All my release notes are on GitHub.", link: releaseNotes)]
+    /// The bubble's steps: one per line, the last linking all the release notes, and then, until the
+    /// sushi has asked once, the step that asks to share usage statistics.
+    static func steps(_ notes: Notes, installed: Version?, asksToShare: Bool = false) -> [TourStep] {
+        let lines: [TourStep]
+        if let installed, let picked = pick(notes, installed: installed) {
+            let name = display(picked.version)
+            lines = picked.lines.enumerated().map { index, line in
+                TourStep(
+                    id: "new-\(index + 1)",
+                    text: index == 0 ? "New in \(name): \(line)" : line,
+                    link: index == picked.lines.count - 1 ? releaseNotes : nil
+                )
+            }
+        } else {
+            lines = [TourStep(id: "none", text: "I don't have notes for this version. All my release notes are on GitHub.", link: releaseNotes)]
         }
-        let name = display(picked.version)
-        return picked.lines.enumerated().map { index, line in
-            TourStep(
-                id: "new-\(index + 1)",
-                text: index == 0 ? "New in \(name): \(line)" : line,
-                link: index == picked.lines.count - 1 ? releaseNotes : nil
-            )
-        }
+        return asksToShare ? lines + [Tour.share] : lines
     }
 }

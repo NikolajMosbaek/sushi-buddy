@@ -66,8 +66,21 @@
         text: "Using Claude Code? I'll cheer when Claude finishes and fly over when it needs you. Run this once in a terminal to connect us:",
         copies: CLAUDE_INSTALL,
       },
+      shareStep(),
       { id: 'bye', text: "That's it! You'll find all of this, and the tour, in Settings. Have a great day! 🍣" },
     ].map(step => ({ switches: [], copies: null, showsLoop: false, ...step }))
+  }
+
+  /** The one time the sushi asks to share usage statistics: in the tour, or at the end of What's New. */
+  function shareStep() {
+    return {
+      id: 'share',
+      text: "One more thing: may I tell Nikolaj, who made me, how I'm used? Once a day and anonymously: your settings and how often I flew, never anything you typed. Settings shows exactly what's sent.",
+      switches: [setting('shareUsage', true, false, 'Share anonymous usage statistics')],
+      copies: null,
+      showsLoop: false,
+      link: null,
+    }
   }
 
   /** Once for everyone, new or updating, and only at a moment an automatic flight could go. */
@@ -113,7 +126,7 @@
     return pose
   }
 
-  const api = { CLAUDE_INSTALL, SUSHI_SIZE, LOOP_SECONDS, steps, isOn, valueFor, startsOnItsOwn, place, bubbleCorner, isOver, tourPose }
+  const api = { CLAUDE_INSTALL, SUSHI_SIZE, LOOP_SECONDS, steps, shareStep, isOn, valueFor, startsOnItsOwn, place, bubbleCorner, isOver, tourPose }
   if (typeof module === 'object' && module.exports) module.exports = api
   else root.SushiTour = api
 })(this)

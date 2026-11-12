@@ -43,6 +43,8 @@ const DEFAULTS = {
   pomodoroBreakMinutes: 5,
   pomodoroLongBreaks: true,
   checkForUpdates: true,
+  // Only ever on because you turned it on.
+  shareUsage: false,
 }
 
 /** Every setting, each one the stored value where that is one of its choices, else its default. */

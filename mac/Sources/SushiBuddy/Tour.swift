@@ -96,8 +96,18 @@ enum Tour {
                 text: "Using Claude Code? I'll cheer when Claude finishes and fly over when it needs you. Run this once in a terminal to connect us:",
                 copies: claudeInstall
             ),
+            share,
             TourStep(id: "bye", text: "That's it! You'll find all of this, and the tour, in Settings. Have a great day! 🍣"),
         ]
+    }
+
+    /// The one time the sushi asks to share usage statistics: in the tour, or at the end of What's New.
+    static var share: TourStep {
+        TourStep(
+            id: "share",
+            text: "One more thing: may I tell Nikolaj, who made me, how I'm used? Once a day and anonymously: your settings and how often I flew, never anything you typed. Settings shows exactly what's sent.",
+            switches: [.setting("shareUsage", \.shareUsage, on: true, off: false, label: "Share anonymous usage statistics")]
+        )
     }
 
     /// Once for everyone, new or updating, and only at a moment an automatic flight could go.

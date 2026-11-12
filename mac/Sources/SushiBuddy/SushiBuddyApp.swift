@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if let folder = value(after: "--preview-whats-new") {
             Task {
-                let steps = WhatsNew.steps(WhatsNew.bundled, installed: Version(Updates.installedVersion))
+                let steps = WhatsNew.steps(WhatsNew.bundled, installed: Version(Updates.installedVersion), asksToShare: true)
                 await TourController.writePreviews(to: URL(fileURLWithPath: folder), preferences: preferences, steps: steps, closeTitle: "Close")
                 NSApp.terminate(nil)
             }
@@ -105,7 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         sushi.start()
         updates.start()
-        if arguments.contains("--fly") { sushi.fly("motivate") }
+        if arguments.contains("--fly") { sushi.fly("motivate", via: "script") }
         if arguments.contains("--settings") { showSettings() }
         if arguments.contains("--tour") {
             Task {
@@ -114,5 +114,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 sushi.startTour()
             }
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        sushi.usage.quitting()
     }
 }

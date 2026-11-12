@@ -38,6 +38,7 @@ final class PettableHostingView<Content: View>: NSHostingView<Content> {
 final class FlightController {
     /// Each flight is held until it lands; a dropped panel vanishes mid-air.
     private var flights: [(panel: NSPanel, timer: Timer?)] = []
+    var onPet: (() -> Void)?
 
     /// The screen your mouse is on.
     var currentScreen: NSScreen? {
@@ -61,8 +62,10 @@ final class FlightController {
                 guard let panel else { return false }
                 return Self.isOverSushi(NSEvent.mouseLocation, flight: flight, at: model.time, in: panel.frame)
             }
-            host.onMouseDown = {
-                if isOver() { model.pet() }
+            host.onMouseDown = { [weak self] in
+                guard isOver() else { return }
+                model.pet()
+                self?.onPet?()
             }
             // The panel lets clicks through except while the mouse is on the sushi.
             let poll = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak panel] _ in

@@ -23,6 +23,7 @@ final class TourModel {
     /// The bubble as drawn, from the top left of the panel, for the click test.
     @ObservationIgnored var bubbleFrame: CGRect = .null
     @ObservationIgnored var onFinish: (() -> Void)?
+    @ObservationIgnored var onShow: ((TourStep) -> Void)?
 
     init(steps: [TourStep], spot: Tour.Spot, canvas: CGSize, closeTitle: String = "Skip tour", look: Look = .classic, start: Date = .now) {
         self.steps = steps
@@ -59,6 +60,7 @@ final class TourModel {
     private func go(by offset: Int) {
         index += offset
         if step.showsLoop { loops.append(time + 0.2) }
+        onShow?(step)
     }
 
     func finish() {
@@ -103,6 +105,8 @@ final class TourController {
     private var running: (panel: NSPanel, model: TourModel, poll: Timer, activity: NSObjectProtocol)?
 
     var isRunning: Bool { running != nil }
+    /// Each step as the bubble comes to it.
+    var onShow: ((TourStep) -> Void)?
 
     /// Whether it started: not while the bubble already shows (the tour, or What's New).
     @discardableResult
@@ -147,6 +151,7 @@ final class TourController {
         }
         RunLoop.main.add(poll, forMode: .common)
 
+        model.onShow = { [weak self] step in self?.onShow?(step) }
         let flightOff = 0.35 + model.flight.flyOut + 0.3
         model.onFinish = { [weak self] in
             Task {

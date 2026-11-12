@@ -91,6 +91,7 @@ function finish() {
 function go(by) {
   index += by
   if (steps[index].showsLoop) loops.push(now() + 0.2)
+  app.shown?.(steps[index].id)
   render()
 }
 

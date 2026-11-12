@@ -54,6 +54,14 @@ struct WhatsNewTests {
         #expect(Set(steps.map(\.id)).count == steps.count)
     }
 
+    @Test func untilItHasAskedTheSushiEndsByAskingToShareUsageStatisticsAfterTheNotes() throws {
+        let steps = WhatsNew.steps(notes, installed: Version("1.6.0"), asksToShare: true)
+        #expect(steps.map(\.id) == ["new-1", "new-2", "share"])
+        #expect(steps.map(\.link) == [nil, WhatsNew.releaseNotes, nil])
+        #expect(try #require(steps.last).switches.map(\.key) == ["shareUsage"])
+        #expect(WhatsNew.steps(notes, installed: Version("1.6.0"), asksToShare: false).map(\.id) == ["new-1", "new-2"])
+    }
+
     @Test func withoutNotesTheSushiPointsToTheReleaseNotes() throws {
         for installed in [Version("1.0"), nil] {
             let steps = WhatsNew.steps(notes, installed: installed)

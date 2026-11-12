@@ -1,5 +1,6 @@
 // What's new in a version, for the menu's What's New: the highlights in whats-new.json, said by
 // the sushi one at a time in the tour's bubble. The same rules as mac/Sources/SushiBuddy/WhatsNew.swift.
+const { shareStep } = require('./tour')
 const { compareVersions, parseVersion } = require('./update')
 
 const RELEASE_NOTES = 'https://github.com/NikolajMosbaek/sushi-buddy/releases'
@@ -24,16 +25,23 @@ function display(version) {
   return parts.join('.')
 }
 
-/** The bubble's steps, shaped like tour.js's: one per line, the last linking all the release notes. */
-function steps(notes, installed) {
+/**
+ * The bubble's steps, shaped like tour.js's: one per line, the last linking all the release notes,
+ * and then, until the sushi has asked once, the step that asks to share usage statistics.
+ */
+function steps(notes, installed, asksToShare = false) {
   const step = (id, text, link) => ({ id, text, switches: [], copies: null, showsLoop: false, link })
   const picked = pick(notes, installed)
-  if (!picked) return [step('none', "I don't have notes for this version. All my release notes are on GitHub.", RELEASE_NOTES)]
-  const name = display(picked.version)
-  const last = picked.lines.length - 1
-  return picked.lines.map((line, index) =>
-    step(`new-${index + 1}`, index === 0 ? `New in ${name}: ${line}` : line, index === last ? RELEASE_NOTES : null),
-  )
+  const lines = picked
+    ? picked.lines.map((line, index) =>
+        step(
+          `new-${index + 1}`,
+          index === 0 ? `New in ${display(picked.version)}: ${line}` : line,
+          index === picked.lines.length - 1 ? RELEASE_NOTES : null,
+        ),
+      )
+    : [step('none', "I don't have notes for this version. All my release notes are on GitHub.", RELEASE_NOTES)]
+  return asksToShare ? [...lines, shareStep()] : lines
 }
 
 module.exports = { RELEASE_NOTES, pick, display, steps }

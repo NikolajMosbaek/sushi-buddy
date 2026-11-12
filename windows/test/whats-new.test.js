@@ -46,6 +46,14 @@ test('one step per line, the first naming the version, the last linking the rele
   assert.equal(new Set(shown.map(step => step.id)).size, shown.length)
 })
 
+test('until it has asked, the sushi ends by asking to share usage statistics, after the notes', () => {
+  const shown = steps(notes, '1.6.0', true)
+  assert.deepEqual(shown.map(step => step.id), ['new-1', 'new-2', 'share'])
+  assert.deepEqual(shown.map(step => step.link), [null, RELEASE_NOTES, null])
+  assert.deepEqual(shown.at(-1).switches.map(toggle => toggle.key), ['shareUsage'])
+  assert.deepEqual(steps(notes, '1.6.0', false).map(step => step.id), ['new-1', 'new-2'])
+})
+
 test('without notes the sushi points to the release notes', () => {
   for (const installed of ['1.0', '?']) {
     const shown = steps(notes, installed)
