@@ -147,25 +147,27 @@ struct UsageTests {
     }
 }
 
+/// One defaults store, emptied as each test starts, so test runs don't leave a file per test behind.
 @MainActor
-@Suite struct UsageReporterRules {
-    func reporter() -> (UsageReporter, Preferences) {
-        let name = "SushiBuddyTests.usage.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: name) ?? .standard
-        defaults.removePersistentDomain(forName: name)
-        let preferences = Preferences(defaults: defaults)
-        return (UsageReporter(preferences: preferences), preferences)
+@Suite(.serialized) final class UsageReporterRules {
+    private static let name = "SushiBuddyTests.usage"
+    private let preferences: Preferences
+    private let usage: UsageReporter
+
+    init() throws {
+        let defaults = try #require(UserDefaults(suiteName: Self.name))
+        defaults.removePersistentDomain(forName: Self.name)
+        preferences = Preferences(defaults: defaults)
+        usage = UsageReporter(preferences: preferences)
     }
 
     @Test func countsNothingWhileSharingIsOff() {
-        let (usage, preferences) = reporter()
         usage.launched()
         usage.count("flight.menu")
         #expect(preferences.usage == nil)
     }
 
     @Test func turningSharingOnMakesAnIDAndOffForgetsItAndEveryCount() throws {
-        let (usage, preferences) = reporter()
         preferences.settings.shareUsage = true
         usage.sharingChanged()
         usage.count("flight.menu")
@@ -183,7 +185,6 @@ struct UsageTests {
     }
 
     @Test func whatsSentShowsTheHashNeverTheID() throws {
-        let (usage, preferences) = reporter()
         preferences.settings.shareUsage = true
         usage.sharingChanged()
         let id = try #require(preferences.usage).id
@@ -193,20 +194,16 @@ struct UsageTests {
         #expect(shown.contains("Sushi.dailySummary"))
     }
 
+    @Test func whatsSentBeforeSharingSaysThereIsNoIDYet() {
+        #expect(usage.preview().contains("made when you turn sharing on"))
+    }
+
     @Test func aRunThatNeverQuitCountsOnceSharingIsOn() throws {
-        let (usage, preferences) = reporter()
         preferences.settings.shareUsage = true
         preferences.runningSince = Date.now.timeIntervalSince1970 - 60
         usage.launched()
         #expect(try #require(preferences.usage).counts["unexpectedQuit"] == 1)
         usage.quitting()
         #expect(preferences.runningSince == nil)
-    }
-}
-
-extension UsageReporterRules {
-    @Test func whatsSentBeforeSharingSaysThereIsNoIDYet() {
-        let (usage, _) = reporter()
-        #expect(usage.preview().contains("made when you turn sharing on"))
     }
 }
