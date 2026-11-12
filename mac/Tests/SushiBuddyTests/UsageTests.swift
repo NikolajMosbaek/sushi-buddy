@@ -149,7 +149,7 @@ struct UsageTests {
 
 @MainActor
 @Suite struct UsageReporterRules {
-    private func reporter() -> (UsageReporter, Preferences) {
+    func reporter() -> (UsageReporter, Preferences) {
         let name = "SushiBuddyTests.usage.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name) ?? .standard
         defaults.removePersistentDomain(forName: name)
@@ -201,5 +201,12 @@ struct UsageTests {
         #expect(try #require(preferences.usage).counts["unexpectedQuit"] == 1)
         usage.quitting()
         #expect(preferences.runningSince == nil)
+    }
+}
+
+extension UsageReporterRules {
+    @Test func whatsSentBeforeSharingSaysThereIsNoIDYet() {
+        let (usage, _) = reporter()
+        #expect(usage.preview().contains("made when you turn sharing on"))
     }
 }

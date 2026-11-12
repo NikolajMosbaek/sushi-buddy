@@ -213,12 +213,21 @@ final class UsageReporter {
         preferences.usage = Usage.count(record, key)
     }
 
-    /// The request as it would go now, for Settings' Show What's Sent.
+    /// The request as it would go now, for Settings' Show What's Sent. While sharing is off there's
+    /// no ID yet, so the ID's place says so.
     func preview() -> String {
-        let record = preferences.usage ?? Usage.Record(id: "a random ID, made when you turn sharing on")
+        let record = preferences.usage ?? Usage.Record(id: "")
         var settings = settings
         settings.shareUsage = true
-        let body = Usage.body(appID: Usage.appID, record: record, payload: Usage.payload(settings, record, Self.environment), testMode: Self.isTestMode)
+        var body = Usage.body(appID: Usage.appID, record: record, payload: Usage.payload(settings, record, Self.environment), testMode: Self.isTestMode)
+        if preferences.usage == nil {
+            body = body.map {
+                Usage.Signal(
+                    appID: $0.appID, clientUser: "the hash of a random ID, made when you turn sharing on", type: $0.type,
+                    isTestMode: $0.isTestMode, payload: $0.payload
+                )
+            }
+        }
         return Usage.encode(body, pretty: true).flatMap { String(data: $0, encoding: .utf8) } ?? ""
     }
 

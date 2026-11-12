@@ -452,11 +452,17 @@ function usageQuitting() {
   if (usageRunning) writeUsage({ runningSince: null })
 }
 
-/** The request as it would go now, for Settings' Show what's sent. */
+/**
+ * The request as it would go now, for Settings' Show what's sent. While sharing is off there's no
+ * ID yet, so the ID's place says so.
+ */
 function usagePreview() {
-  const record = usageRecord() ?? usage.newRecord('a random ID, made when you turn sharing on')
+  const stored = usageRecord()
+  const record = stored ?? usage.newRecord('')
   const summary = usage.payload({ ...settings, shareUsage: true }, record, usageEnvironment(), DEFAULTS)
-  return JSON.stringify(usage.body(USAGE_APP_ID, record, summary, !app.isPackaged), null, 2)
+  const body = usage.body(USAGE_APP_ID, record, summary, !app.isPackaged)
+  if (!stored) body[0].clientUser = 'the hash of a random ID, made when you turn sharing on'
+  return JSON.stringify(body, null, 2)
 }
 
 /** Every few seconds: when sharing is on and today's summary hasn't gone, send it. */
