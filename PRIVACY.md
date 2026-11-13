@@ -1,7 +1,7 @@
 # Privacy
 
 Sushi Buddy collects nothing about you unless you ask it to. It has no accounts, no ads and no
-tracking. From version 1.8 there is one switch that sends me anything at all, **Share anonymous usage
+tracking across apps or sites. From version 1.8 there is one switch that sends me anything at all, **Share anonymous usage
 statistics**, and it is off until you turn it on. What it sends is below.
 
 ## What it looks at, on your computer only

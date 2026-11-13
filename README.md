@@ -167,8 +167,8 @@ is a thank-you: it unlocks nothing, and the app never asks for one.
 
 ## Privacy
 
-Sushi Buddy collects nothing unless you ask it to: no accounts, no ads, no tracking. What it looks at
-stays on your computer. Online it checks GitHub for updates and, only if you turn on **Share anonymous
+Sushi Buddy collects nothing unless you ask it to: no accounts, no ads, no tracking across apps or
+sites. What it looks at stays on your computer. Online it checks GitHub for updates and, only if you turn on **Share anonymous
 usage statistics**, sends one anonymous summary a day to TelemetryDeck; **Show What's Sent…** next to
 the switch shows the exact request. The details are in [PRIVACY.md](PRIVACY.md).
 
