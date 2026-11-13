@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('sushiSettings', {
   set: (key, value) => ipcRenderer.invoke('settings:set', key, value),
   act: action => ipcRenderer.invoke('settings:action', action),
   signals: () => ipcRenderer.invoke('settings:signals'),
+  usagePreview: () => ipcRenderer.invoke('settings:usage-preview'),
   onState: listener => ipcRenderer.on('settings:state', (_event, state) => listener(state)),
 })

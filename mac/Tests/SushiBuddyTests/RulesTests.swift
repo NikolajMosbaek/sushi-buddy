@@ -413,19 +413,19 @@ private let bundledLines: Lines.Book = {
 
     @Test func theStepsShowEveryFeatureAndEndWithWhereToFindThemAgain() throws {
         let steps = Tour.steps(on: .mac, shortcut: "⌃⌥⌘S")
-        #expect(steps.map(\.id) == ["hello", "home", "shortcut", "pet", "tricks", "onTheirOwn", "quiet", "claude", "bye"])
+        #expect(steps.map(\.id) == ["hello", "home", "shortcut", "pet", "tricks", "onTheirOwn", "quiet", "claude", "share", "bye"])
         #expect(steps[2].text.contains("⌃⌥⌘S"))
         #expect(Tour.steps(on: .mac, shortcut: nil)[2].text.contains("Settings"))
         #expect(steps.filter(\.showsLoop).map(\.id) == ["tricks"])
         #expect(try #require(steps.first { $0.id == "claude" }).copies == Tour.claudeInstall)
-        #expect(switches.map(\.key) == ["petting", "sound", "autoMotivateSeconds", "breakReminderMinutes", "welcomeBack"])
+        #expect(switches.map(\.key) == ["petting", "sound", "autoMotivateSeconds", "breakReminderMinutes", "welcomeBack", "shareUsage"])
         #expect(try #require(steps.last).text.contains("Settings"))
         #expect(Tour.steps(on: .windows, shortcut: nil)[1].text.contains("tray"))
     }
 
     @Test func aSwitchTurnsOnWhatItOffersAndOffBackToOff() {
-        let offered: [String: AnyHashable] = ["petting": true, "sound": "chime", "autoMotivateSeconds": 3600, "breakReminderMinutes": 60, "welcomeBack": true]
-        let off: [String: AnyHashable] = ["petting": false, "sound": "off", "autoMotivateSeconds": 0, "breakReminderMinutes": 0, "welcomeBack": false]
+        let offered: [String: AnyHashable] = ["petting": true, "sound": "chime", "autoMotivateSeconds": 3600, "breakReminderMinutes": 60, "welcomeBack": true, "shareUsage": true]
+        let off: [String: AnyHashable] = ["petting": false, "sound": "off", "autoMotivateSeconds": 0, "breakReminderMinutes": 0, "welcomeBack": false, "shareUsage": false]
         for toggle in switches {
             var settings = Settings()
             toggle.turn(&settings, false)

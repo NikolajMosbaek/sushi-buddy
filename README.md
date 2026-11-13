@@ -78,6 +78,7 @@ holds flights back starts **on**.
 | `claudeNeedsYou` | Fly when Claude needs your permission | on |
 | `pomodoroFocusMinutes`, `pomodoroBreakMinutes`, `pomodoroLongBreaks` | **Pomodoro** lengths, and a 15-minute break after every fourth | 25, 5, on |
 | `checkForUpdates` | Check GitHub for a newer release at launch and once a day | on |
+| `shareUsage` | **Share anonymous usage statistics**: once a day, an anonymous summary of the settings and how often the sushi flew, to TelemetryDeck (what exactly is in [PRIVACY.md](PRIVACY.md)). The tour asks once, and What's New does if the tour never did | off |
 
 Launch at login (Start with Windows) is a switch there too; macOS and Windows keep that one themselves.
 
@@ -166,9 +167,15 @@ is a thank-you: it unlocks nothing, and the app never asks for one.
 
 ## Privacy
 
-Sushi Buddy collects nothing: no accounts, no analytics, no tracking. What it looks at stays on your
-computer, and the only thing it does online on its own is the update check with GitHub. The details
-are in [PRIVACY.md](PRIVACY.md).
+Sushi Buddy collects nothing unless you ask it to: no accounts, no ads, no tracking across apps or
+sites. What it looks at stays on your computer. Online it checks GitHub for updates and, only if you turn on **Share anonymous
+usage statistics**, sends one anonymous summary a day to TelemetryDeck; **Show What's Sent…** next to
+the switch shows the exact request. The details are in [PRIVACY.md](PRIVACY.md).
+
+The summary is built the same way on both platforms (`mac/Sources/SushiBuddy/Usage.swift`,
+`windows/usage.js`, tested case for case) and posted to TelemetryDeck's ingest API without its SDK.
+The TelemetryDeck app ID is in `Resources/usage.json`; while it's empty, nothing is sent. Debug builds
+(Electron unpackaged) send in test mode, which TelemetryDeck keeps out of the real numbers.
 
 ## Releasing
 

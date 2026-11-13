@@ -1,10 +1,12 @@
 const { app, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMain, nativeImage, powerMonitor, screen, shell } =
   require('electron')
+const crypto = require('node:crypto')
 const fs = require('node:fs')
+const os = require('node:os')
 const path = require('node:path')
 
 const { DURATION, FLY_IN, previewFlight, randomFlight } = require('./flight')
-const { CHOICES, normalize, readFile, update, writeFile } = require('./settings')
+const { CHOICES, DEFAULTS, normalize, readFile, update, writeFile } = require('./settings')
 const { advanceStreak, mergeLines, pickLine } = require('./lines')
 const { QUIET_REASONS, breakTick, isAway, presenceTick, quietReason } = require('./presence')
 const { describe: describePomodoro, nextPhase, startPomodoro } = require('./pomodoro')
@@ -12,9 +14,10 @@ const { ClaudeTracker } = require('./claude')
 const { PORT, listen } = require('./listener')
 const { readSystem, signalsFrom } = require('./system')
 const { check: checkForUpdate } = require('./update')
-const { place: placeTour, startsOnItsOwn, steps: tourSteps } = require('./tour')
+const { place: placeTour, shareStep: tourShareStep, startsOnItsOwn, steps: tourSteps } = require('./tour')
 const { RELEASE_NOTES, display: displayVersion, steps: whatsNewSteps } = require('./whats-new')
 const { current: currentLook, decode: decodeLooks, named: lookNamed } = require('./looks')
+const usage = require('./usage')
 
 const ASSETS = path.join(__dirname, 'assets')
 const OVERLAY = path.join(__dirname, 'overlay.html')
@@ -22,6 +25,8 @@ const SETTINGS_PAGE = path.join(__dirname, 'settings.html')
 const TOUR = path.join(__dirname, 'tour.html')
 const BUNDLED_LINES = JSON.parse(fs.readFileSync(path.join(ASSETS, 'lines.json'), 'utf8'))
 const WHATS_NEW = JSON.parse(fs.readFileSync(path.join(ASSETS, 'whats-new.json'), 'utf8'))
+// TelemetryDeck's app ID for the usage summary; empty sends nothing.
+const USAGE_APP_ID = JSON.parse(fs.readFileSync(path.join(ASSETS, 'usage.json'), 'utf8')).appID ?? ''
 const { stage: LOOK_STAGE, looks: LOOKS } = decodeLooks(JSON.parse(fs.readFileSync(path.join(ASSETS, 'sushis.json'), 'utf8')))
 const INSTALL_HOOKS = 'claude plugin install sushi-buddy --marketplace NikolajMosbaek/sushi-buddy'
 // A tip is a thank-you; it unlocks nothing.
@@ -99,8 +104,9 @@ function launch(message) {
 /**
  * Flies now. `occasion` is 'motivate' or one of the line file's occasions. An automatic flight
  * first checks the quiet rules, and a skip is shown in Settings so a quiet app doesn't look broken.
+ * `via` says what asked, where the occasion doesn't: the shortcut or a script.
  */
-async function fly(occasion = 'motivate', { automatic = false, project, message } = {}) {
+async function fly(occasion = 'motivate', { automatic = false, project, message, via } = {}) {
   // During the tour the tour's sushi spins instead of a second one flying.
   if (tourWindow) {
     tourWindow.webContents.send('tour:react')
@@ -110,11 +116,13 @@ async function fly(occasion = 'motivate', { automatic = false, project, message 
     const reason = quietReason(settings, await quietSignals())
     if (reason) {
       status.lastSkip = { occasion, reason: QUIET_REASONS[reason], at: Date.now() }
+      countUsage(`skip.${reason}`)
       sendState()
       return
     }
   }
   launch(message ?? lineFor(occasion, project))
+  countUsage(`flight.${usage.trigger(occasion, automatic, via)}`)
 }
 
 function loadLines() {
@@ -175,6 +183,7 @@ function restartAutoMotivate() {
 /** Every few seconds: have you come back, and is a break due? */
 function watch() {
   startTourIfQuiet()
+  sendUsageIfDue()
   const now = Date.now()
   const { idleSeconds, locked } = idle()
   const away = isAway({ idleSeconds, locked }, settings.awayMinutes)
@@ -222,7 +231,7 @@ function registerHotkey() {
   globalShortcut.unregisterAll()
   status.hotkeyProblem = null
   if (settings.hotkey === 'off') return
-  if (!globalShortcut.register(settings.hotkey, () => fly())) {
+  if (!globalShortcut.register(settings.hotkey, () => fly('motivate', { via: 'shortcut' }))) {
     status.hotkeyProblem = `${HOTKEY_LABELS[settings.hotkey]} is taken by another app; pick another.`
   }
 }
@@ -240,7 +249,7 @@ async function startListening() {
       if (cheer) fly(cheer.kind, { automatic: true, project: cheer.project })
       sendState()
     },
-    onFly: message => fly('motivate', { message: message ?? undefined }),
+    onFly: message => fly('motivate', { message: message ?? undefined, via: 'script' }),
   })
   listener = result.server
   status.listenerProblem = result.error ?? null
@@ -332,7 +341,8 @@ function startTour() {
 
 /** What's new in this version, in the tour's bubble, as the menu and Settings ask for it. */
 function showWhatsNew() {
-  showInBubble({ steps: JSON.stringify(whatsNewSteps(WHATS_NEW, app.getVersion())), close: 'Close' })
+  const asksToShare = readFile(settingsFile()).usageAsked !== true && !settings.shareUsage
+  showInBubble({ steps: JSON.stringify(whatsNewSteps(WHATS_NEW, app.getVersion(), asksToShare)), close: 'Close' })
 }
 
 /**
@@ -381,6 +391,102 @@ ipcMain.handle('tour:set', (_event, key, value) => {
 ipcMain.handle('tour:copy-install', () => clipboard.writeText(INSTALL_HOOKS))
 ipcMain.handle('tour:release-notes', () => shell.openExternal(RELEASE_NOTES))
 ipcMain.on('tour:done', event => BrowserWindow.fromWebContents(event.sender)?.destroy())
+ipcMain.on('tour:shown', (_event, id) => {
+  if (id === tourShareStep().id) writeFile(settingsFile(), { ...readFile(settingsFile()), usageAsked: true })
+})
+
+// MARK: Usage statistics
+
+// Kept in settings.json next to the settings: `usage` (the random ID and the counts, only while
+// sharing is on), `usageAsked` and `runningSince`. See usage.js for what's sent.
+let usageSending = false
+let usageRunning = false
+
+const usageRecord = () => readFile(settingsFile()).usage ?? null
+const writeUsage = changes => writeFile(settingsFile(), { ...readFile(settingsFile()), ...changes })
+
+function usageEnvironment() {
+  return {
+    version: app.getVersion(),
+    build: app.getVersion(),
+    operatingSystem: process.platform === 'win32' ? 'Windows' : process.platform,
+    systemVersion: os.release(),
+    systemMajorVersion: usage.windowsMajor(os.release()),
+    architecture: process.arch,
+    isDebug: !app.isPackaged,
+    installSource: usage.installSource(process.execPath),
+  }
+}
+
+/** Turning sharing on makes a new random ID; turning it off forgets the ID and every count. */
+function usageSharingChanged() {
+  if (settings.shareUsage && !usageRecord()) {
+    writeUsage({ usage: usage.noteSettings(usage.newRecord(crypto.randomUUID()), settings, DEFAULTS) })
+  } else if (!settings.shareUsage && usageRecord()) {
+    writeUsage({ usage: null })
+  }
+}
+
+function usageSettingsChanged() {
+  const record = usageRecord()
+  if (settings.shareUsage && record) writeUsage({ usage: usage.noteSettings(record, settings, DEFAULTS) })
+}
+
+/** Counts nothing while sharing is off. */
+function countUsage(key) {
+  const record = usageRecord()
+  if (settings.shareUsage && record) writeUsage({ usage: usage.count(record, key) })
+}
+
+/** At launch: a run that didn't quit counts as an unexpected quit, and this one starts. */
+function usageLaunched() {
+  const now = Date.now() / 1000
+  usageSharingChanged()
+  if (usage.quitUnexpectedly(readFile(settingsFile()).runningSince ?? null, now, os.uptime())) countUsage('unexpectedQuit')
+  writeUsage({ runningSince: now })
+  usageRunning = true
+}
+
+/** Only the run that started the app clears it, not a --preview run quitting next to it. */
+function usageQuitting() {
+  if (usageRunning) writeUsage({ runningSince: null })
+}
+
+/**
+ * The request as it would go now, for Settings' Show what's sent. While sharing is off there's no
+ * ID yet, so the ID's place says so.
+ */
+function usagePreview() {
+  const stored = usageRecord()
+  const record = stored ?? usage.newRecord('')
+  const summary = usage.payload({ ...settings, shareUsage: true }, record, usageEnvironment(), DEFAULTS)
+  const body = usage.body(USAGE_APP_ID, record, summary, !app.isPackaged)
+  if (!stored) body[0].clientUser = 'the hash of a random ID, made when you turn sharing on'
+  return JSON.stringify(body, null, 2)
+}
+
+/** Every few seconds: when sharing is on and today's summary hasn't gone, send it. */
+async function sendUsageIfDue() {
+  const record = usageRecord()
+  const today = usage.day(new Date())
+  if (!settings.shareUsage || !USAGE_APP_ID || usageSending || !record || !usage.isDue(record, today)) return
+  usageSending = true
+  try {
+    const summary = usage.payload(settings, record, usageEnvironment(), DEFAULTS)
+    const response = await fetch(usage.ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(usage.body(USAGE_APP_ID, record, summary, !app.isPackaged)),
+    })
+    // Sharing may have gone off while the request was out; then there's nothing left to update.
+    const current = usageRecord()
+    if (response.ok && current && current.id === record.id) writeUsage({ usage: usage.afterSend(current, record, today) })
+  } catch {
+    // Offline: the counts wait for the next try.
+  } finally {
+    usageSending = false
+  }
+}
 
 // MARK: Settings
 
@@ -401,6 +507,10 @@ function apply(old) {
   if (!old || old.hotkey !== now.hotkey) registerHotkey()
   if (!old || old.listen !== now.listen) now.listen ? startListening() : stopListening()
   if (!old || old.checkForUpdates !== now.checkForUpdates) now.checkForUpdates ? startQuietUpdateChecks() : stopQuietUpdateChecks()
+  if (old) {
+    if (old.shareUsage !== now.shareUsage) usageSharingChanged()
+    usageSettingsChanged()
+  }
 }
 
 function state() {
@@ -494,6 +604,7 @@ async function describeSignals() {
 }
 
 ipcMain.handle('settings:signals', () => describeSignals())
+ipcMain.handle('settings:usage-preview', () => usagePreview())
 
 function settingsWindowOptions(extra = {}) {
   return {
@@ -653,14 +764,18 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   // A second launch (a shortcut with --fly) reaches the running app.
   app.on('second-instance', (_event, argv) => {
-    if (argv.includes('--fly')) fly()
+    if (argv.includes('--fly')) fly('motivate', { via: 'script' })
     if (argv.includes('--settings')) showSettings()
     if (argv.includes('--tour')) startTour()
   })
   // Overlays and Settings come and go; the app lives in the tray until Quit.
   app.on('window-all-closed', () => {})
-  app.on('will-quit', () => globalShortcut.unregisterAll())
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
+    usageQuitting()
+  })
 
+  ipcMain.on('overlay:petted', () => countUsage('pet'))
   ipcMain.on('overlay:over-sushi', (event, over) => {
     BrowserWindow.fromWebContents(event.sender)?.setIgnoreMouseEvents(!over, { forward: true })
   })
@@ -703,18 +818,19 @@ if (!app.requestSingleInstanceLock()) {
     if (tourFolder) return previewTour(tourFolder)
     const whatsNewFolder = argument('--preview-whats-new')
     if (whatsNewFolder) {
-      const steps = whatsNewSteps(WHATS_NEW, app.getVersion())
+      const steps = whatsNewSteps(WHATS_NEW, app.getVersion(), true)
       return previewTour(whatsNewFolder, steps, { steps: JSON.stringify(steps), close: 'Close' })
     }
 
     if (process.platform === 'darwin') app.dock?.hide()
+    usageLaunched()
     makeTray()
     apply(null)
     watchTimer = setInterval(watch, 5000)
     // The tour, once, a moment after launch so the tray icon is in place to fly to.
     tourWaiting = readFile(settingsFile()).tourSeen !== true
     if (tourWaiting) setTimeout(startTourIfQuiet, 2000)
-    if (process.argv.includes('--fly')) fly()
+    if (process.argv.includes('--fly')) fly('motivate', { via: 'script' })
     if (process.argv.includes('--settings')) showSettings()
     if (process.argv.includes('--tour')) setTimeout(startTour, 1000)
   })

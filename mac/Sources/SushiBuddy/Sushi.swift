@@ -24,6 +24,7 @@ final class Sushi {
     @ObservationIgnored let updates: Updates
     @ObservationIgnored let flights = FlightController()
     @ObservationIgnored let tour = TourController()
+    @ObservationIgnored let usage: UsageReporter
 
     private(set) var lastSkip: Skip?
     private(set) var linesProblem: String?
@@ -40,12 +41,12 @@ final class Sushi {
     @ObservationIgnored private var claude = ClaudeTracker()
     @ObservationIgnored private var timekeeping: NSObjectProtocol?
     @ObservationIgnored private var tourWaiting = false
-    @ObservationIgnored private lazy var hotkey = Hotkey { [weak self] in self?.fly("motivate") }
+    @ObservationIgnored private lazy var hotkey = Hotkey { [weak self] in self?.fly("motivate", via: "shortcut") }
     @ObservationIgnored private lazy var listener: Listener = {
         let listener = Listener(
             version: Updates.installedVersion,
             onClaude: { [weak self] event in self?.heard(event) },
-            onFly: { [weak self] message in self?.fly("motivate", message: message) }
+            onFly: { [weak self] message in self?.fly("motivate", message: message, via: "script") }
         )
         listener.onProblemChange = { [weak self] problem in self?.listenerProblem = problem }
         return listener
@@ -54,11 +55,17 @@ final class Sushi {
     init(preferences: Preferences, updates: Updates) {
         self.preferences = preferences
         self.updates = updates
+        usage = UsageReporter(preferences: preferences)
     }
 
     var settings: Settings { preferences.settings }
 
     func start() {
+        usage.launched()
+        flights.onPet = { [weak self] in self?.usage.count("pet") }
+        tour.onShow = { [weak self] step in
+            if step.id == Tour.share.id { self?.preferences.usageAsked = true }
+        }
         apply(since: nil)
         preferences.onChange = { [weak self] old in self?.apply(since: old) }
         watcher = Task { [weak self] in
@@ -90,7 +97,8 @@ final class Sushi {
 
     /// What's new in this version, in the tour's bubble, as the menu and Settings ask for it.
     func showWhatsNew() {
-        let steps = WhatsNew.steps(WhatsNew.bundled, installed: Version(Updates.installedVersion))
+        let asksToShare = !preferences.usageAsked && !settings.shareUsage
+        let steps = WhatsNew.steps(WhatsNew.bundled, installed: Version(Updates.installedVersion), asksToShare: asksToShare)
         tour.start(steps: steps, preferences: preferences, closeTitle: "Close")
     }
 
@@ -111,6 +119,10 @@ final class Sushi {
             if new.listen { listener.start() } else { listener.stop() }
         }
         if old?.checkForUpdates != new.checkForUpdates { updates.setAutomaticChecks(new.checkForUpdates) }
+        if let old {
+            if old.shareUsage != new.shareUsage { usage.sharingChanged() }
+            usage.settingsChanged()
+        }
         let automatic = new.autoMotivateSeconds > 0 || new.breakReminderMinutes > 0 || new.welcomeBack
         if automatic, new.quietDuringFocus, FocusStatus.authorization == .notDetermined {
             Task { _ = await FocusStatus.requestAccess() }
@@ -135,14 +147,16 @@ final class Sushi {
     // MARK: Flying
 
     /// Flies now. `occasion` is "motivate" or one of the line file's occasions; an automatic
-    /// flight first checks the quiet rules.
-    func fly(_ occasion: String, automatic: Bool = false, project: String? = nil, message: String? = nil) {
+    /// flight first checks the quiet rules. `via` says what asked, where the occasion doesn't: the
+    /// shortcut or a script.
+    func fly(_ occasion: String, automatic: Bool = false, project: String? = nil, message: String? = nil, via: String? = nil) {
         if tour.isRunning {
             tour.react()
             return
         }
         if automatic, let reason = Quiet.reason(settings, SystemSignals.quietSignals(awayMinutes: settings.awayMinutes)) {
             lastSkip = Skip(occasion: occasion, reason: reason, at: .now)
+            usage.count("skip.\(reason.rawValue)")
             logger.notice("skipped \(occasion, privacy: .public): \(reason.explanation, privacy: .public)")
             return
         }
@@ -153,6 +167,7 @@ final class Sushi {
         let text = message ?? line(for: occasion, project: project)
         let flight = Flight.random(on: screen.frame.size, message: text, path: .named(settings.flightPath), look: Looks.current(settings.sushi))
         flights.launch(flight, on: screen, petting: settings.petting, sound: settings.sound)
+        usage.count("flight.\(Usage.trigger(occasion, automatic: automatic, via: via))")
     }
 
     private func line(for occasion: String, project: String?) -> String {
@@ -235,6 +250,7 @@ final class Sushi {
     /// Every few seconds: have you come back, and is a break due?
     private func watch() {
         startTourIfQuiet()
+        usage.tick()
         let now = Date.now
         let idle = SystemSignals.idleSeconds
         let away = Quiet.isAway(idleSeconds: idle, locked: SystemSignals.isLocked, awayMinutes: settings.awayMinutes)

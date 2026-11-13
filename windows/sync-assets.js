@@ -14,6 +14,7 @@ const files = [
     'MenuBarIcon.png',
     'lines.json',
     'whats-new.json',
+    'usage.json',
     'sushis.json',
     'chime.wav',
     'whirr.wav',

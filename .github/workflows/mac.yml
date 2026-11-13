@@ -29,7 +29,7 @@ jobs:
           "$app" --preview-settings "$GITHUB_WORKSPACE/settings-mac"
           "$app" --preview-tour "$GITHUB_WORKSPACE/tour-mac"
           ls -l "$GITHUB_WORKSPACE/preview-mac.png" "$GITHUB_WORKSPACE"/settings-mac/*.png
-          test "$(ls "$GITHUB_WORKSPACE"/tour-mac/tour-*.png | wc -l)" -eq 9
+          test "$(ls "$GITHUB_WORKSPACE"/tour-mac/tour-*.png | wc -l)" -eq 10
       - uses: actions/upload-artifact@v4
         with:
           name: mac-preview

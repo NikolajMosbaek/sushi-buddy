@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('sushiTourApp', {
   copyInstall: () => ipcRenderer.invoke('tour:copy-install'),
   openReleaseNotes: () => ipcRenderer.invoke('tour:release-notes'),
   done: () => ipcRenderer.send('tour:done'),
+  shown: id => ipcRenderer.send('tour:shown', id),
   setOverSushi: over => ipcRenderer.send('overlay:over-sushi', over === true),
   onReact: listener => ipcRenderer.on('tour:react', () => listener()),
 })

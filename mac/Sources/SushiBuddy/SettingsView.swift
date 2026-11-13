@@ -89,6 +89,7 @@ private struct GeneralTab: View {
     @Binding var settings: Settings
     let sushi: Sushi
     let launchAtLogin: LaunchAtLogin
+    @State private var showsUsage = false
 
     var body: some View {
         Form {
@@ -118,7 +119,15 @@ private struct GeneralTab: View {
                     Spacer()
                     Button("Tip the Sushi…") { sushi.openTipJar() }
                 }
+                Toggle("Share anonymous usage statistics", isOn: $settings.shareUsage)
+                HStack {
+                    Text("Once a day: your settings and how often the sushi flew. Never anything you typed.")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Show What's Sent…") { showsUsage = true }
+                }
             }
+            .sheet(isPresented: $showsUsage) { UsagePreview(text: sushi.usage.preview()) }
             Section("Flights") {
                 Picker("Sushi", selection: $settings.sushi) {
                     Text("By the calendar (now \(Looks.current(Looks.byTheCalendar).name))").tag(Looks.byTheCalendar)
@@ -147,6 +156,32 @@ private struct GeneralTab: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// The usage summary exactly as it would go now, for Show What's Sent.
+private struct UsagePreview: View {
+    let text: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("What Sushi Buddy sends once a day while sharing is on").font(.headline)
+            Text("The ID is random, made when you turn sharing on and forgotten when you turn it off, and only its hash leaves your Mac.")
+                .foregroundStyle(.secondary)
+            ScrollView {
+                Text(text)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 520, height: 460)
     }
 }
 

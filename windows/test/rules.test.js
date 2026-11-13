@@ -318,20 +318,20 @@ test('everyone sees the tour once, at a moment an automatic flight could go', ()
 
 test('the tour shows every feature and ends with where to find them again', () => {
   const steps = tour.steps('mac', '⌃⌥⌘S')
-  assert.deepEqual(steps.map(step => step.id), ['hello', 'home', 'shortcut', 'pet', 'tricks', 'onTheirOwn', 'quiet', 'claude', 'bye'])
+  assert.deepEqual(steps.map(step => step.id), ['hello', 'home', 'shortcut', 'pet', 'tricks', 'onTheirOwn', 'quiet', 'claude', 'share', 'bye'])
   assert.ok(steps[2].text.includes('⌃⌥⌘S'))
   assert.ok(tour.steps('mac', null)[2].text.includes('Settings'))
   assert.deepEqual(steps.filter(step => step.showsLoop).map(step => step.id), ['tricks'])
   assert.equal(steps.find(step => step.id === 'claude').copies, tour.CLAUDE_INSTALL)
   const keys = steps.flatMap(step => step.switches).map(toggle => toggle.key)
-  assert.deepEqual(keys, ['petting', 'sound', 'autoMotivateSeconds', 'breakReminderMinutes', 'welcomeBack'])
+  assert.deepEqual(keys, ['petting', 'sound', 'autoMotivateSeconds', 'breakReminderMinutes', 'welcomeBack', 'shareUsage'])
   assert.ok(steps.at(-1).text.includes('Settings'))
   assert.ok(tour.steps('windows', null)[1].text.includes('tray'))
 })
 
 test('a tour switch turns on what it offers and off back to off', () => {
-  const offered = { petting: true, sound: 'chime', autoMotivateSeconds: 3600, breakReminderMinutes: 60, welcomeBack: true }
-  const off = { petting: false, sound: 'off', autoMotivateSeconds: 0, breakReminderMinutes: 0, welcomeBack: false }
+  const offered = { petting: true, sound: 'chime', autoMotivateSeconds: 3600, breakReminderMinutes: 60, welcomeBack: true, shareUsage: true }
+  const off = { petting: false, sound: 'off', autoMotivateSeconds: 0, breakReminderMinutes: 0, welcomeBack: false, shareUsage: false }
   for (const toggle of tour.steps('windows', null).flatMap(step => step.switches)) {
     let settings = { ...DEFAULTS, [toggle.key]: tour.valueFor(toggle, DEFAULTS, false) }
     assert.equal(tour.isOn(toggle, settings), false, toggle.key)
