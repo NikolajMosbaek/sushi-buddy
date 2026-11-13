@@ -4,7 +4,7 @@
 // line, a project or anything you typed. The same rules and fields as mac/Sources/SushiBuddy/Usage.swift.
 const crypto = require('node:crypto')
 
-const ENDPOINT = 'https://nom.telemetrydeck.com/v2/'
+const ENDPOINT = 'https://nom.telemetrydeck.com/v2/namespace/com.nsscode/'
 const SIGNAL = 'Sushi.dailySummary'
 const TRIGGERS = ['menu', 'shortcut', 'script', 'auto', 'break', 'welcomeBack', 'pomodoro', 'claudeDone', 'claudeNeedsYou']
 const QUIET_REASONS = ['away', 'focus', 'call', 'presenting']

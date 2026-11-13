@@ -9,7 +9,7 @@ private let logger = Logger(subsystem: "com.nsscode.SushiBuddy", category: "usag
 /// made when you turned it on (and forgotten when you turn it off), hashed before it leaves. Never a
 /// line, a project or anything you typed. The same rules and fields as windows/usage.js.
 enum Usage {
-    static let endpoint = URL(string: "https://nom.telemetrydeck.com/v2/")
+    static let endpoint = URL(string: "https://nom.telemetrydeck.com/v2/namespace/com.nsscode/")
     static let signal = "Sushi.dailySummary"
     static let triggers = ["menu", "shortcut", "script", "auto", "break", "welcomeBack", "pomodoro", "claudeDone", "claudeNeedsYou"]
     static let quietReasons = ["away", "focus", "call", "presenting"]
